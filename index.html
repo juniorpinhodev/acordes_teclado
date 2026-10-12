@@ -1,0 +1,1505 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#121214">
+    <title>Dicionário de Acordes - Teclado</title>
+    <style>
+        /* Reset e Box-sizing global */
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* Proporções dinâmicas das teclas com clamp para adaptação em qualquer tela */
+            --white-key-w: clamp(21px, calc((100vw - 64px) / 14), 46px);
+            --white-key-h: calc(var(--white-key-w) * 3.75);
+            --black-key-w: calc(var(--white-key-w) * 0.65);
+            --black-key-h: calc(var(--white-key-h) * 0.62);
+            --key-radius: clamp(3px, 0.8vw, 6px);
+            --font-note-white: clamp(0.55rem, 1.2vw, 0.85rem);
+            --font-note-black: clamp(0.48rem, 1vw, 0.72rem);
+        }
+
+        /* Estilização moderna e limpa */
+        body { 
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            background: #121214; 
+            color: #e1e1e6; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            padding: clamp(1rem, 3vw, 2.5rem) clamp(0.75rem, 2vw, 1.5rem);
+            margin: 0;
+            min-height: 100vh;
+            width: 100%;
+            overflow-x: hidden;
+        }
+
+        /* Cabeçalho */
+        header {
+            text-align: center;
+            margin-bottom: clamp(1.5rem, 3vw, 2.5rem);
+            width: 100%;
+            max-width: 840px;
+        }
+        h1 { 
+            margin: 0 0 0.5rem 0; 
+            color: #ffffff; 
+            font-size: clamp(1.4rem, 4vw, 2.2rem);
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            line-height: 1.2;
+        }
+        .subtitle {
+            margin: 0;
+            color: #a8a8b3;
+            font-size: clamp(0.85rem, 2vw, 1rem);
+        }
+
+        /* Painel de Controles */
+        .controls-card {
+            background: #202024;
+            border: 1px solid #29292e;
+            border-radius: 14px;
+            padding: clamp(1rem, 2.5vw, 1.5rem);
+            margin-bottom: clamp(1.5rem, 3vw, 2.5rem);
+            width: 100%;
+            max-width: 840px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        .controls { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); 
+            gap: 1rem; 
+            align-items: flex-end;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .control-group label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #a8a8b3;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        select, button { 
+            width: 100%;
+            min-height: 46px; 
+            padding: 0.75rem 1rem; 
+            border-radius: 8px; 
+            border: 1px solid #323238; 
+            font-size: 0.95rem; 
+            background: #121214;
+            color: #e1e1e6;
+            outline: none;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        select:focus {
+            border-color: #8257e5;
+            box-shadow: 0 0 0 2px rgba(130, 87, 229, 0.25);
+        }
+
+        select optgroup {
+            background: #202024;
+            color: #996dff;
+            font-weight: 700;
+        }
+
+        select option {
+            background: #121214;
+            color: #e1e1e6;
+            font-weight: normal;
+        }
+
+        button { 
+            background: #8257e5; 
+            color: white; 
+            border: none;
+            cursor: pointer; 
+            font-weight: 700; 
+            transition: background 0.2s, transform 0.1s, box-shadow 0.2s; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        button:hover { 
+            background: #996dff; 
+            box-shadow: 0 4px 14px rgba(130, 87, 229, 0.4);
+        }
+        button:active {
+            transform: scale(0.98);
+        }
+
+        /* Botão Principal Salvar */
+        .btn-save-main {
+            background: #8257e5;
+            color: white;
+            font-size: 1rem;
+        }
+
+        /* Responsividade para telas menores nos controles */
+        @media (max-width: 640px) {
+            .controls {
+                grid-template-columns: 1fr 1fr;
+            }
+            .control-group.btn-group {
+                grid-column: span 2;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .controls {
+                grid-template-columns: 1fr;
+            }
+            .control-group.btn-group {
+                grid-column: span 1;
+            }
+        }
+
+        /* Grid dos Acordes Principais */
+        .chords-grid {
+            display: flex;
+            flex-direction: column;
+            gap: clamp(1.25rem, 2.5vw, 2rem);
+            width: 100%;
+            max-width: 840px;
+        }
+
+        /* Card do Piano */
+        .piano-wrapper {
+            background: #202024;
+            border: 1px solid #29292e;
+            padding: clamp(1rem, 2.5vw, 1.75rem);
+            border-radius: 14px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        .piano-wrapper.hidden {
+            display: none !important;
+        }
+
+        .piano-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .piano-header-left {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+        }
+
+        .piano-header h2 {
+            margin: 0;
+            font-size: clamp(1.05rem, 2.5vw, 1.3rem);
+            color: #ffffff;
+            font-weight: 700;
+        }
+
+        .notes-badge {
+            background: #121214;
+            border: 1px solid #323238;
+            padding: 0.35rem 0.8rem;
+            border-radius: 20px;
+            font-size: clamp(0.75rem, 1.8vw, 0.85rem);
+            color: #a78bfa;
+            font-weight: 600;
+            letter-spacing: 0.03em;
+        }
+
+        /* Botão de salvar variação específica diretamente no card */
+        .btn-save-variation {
+            width: auto;
+            min-height: 36px;
+            padding: 0.4rem 0.9rem;
+            font-size: 0.82rem;
+            background: #2a2a30;
+            border: 1px solid #3d3d45;
+            color: #e1e1e6;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: all 0.2s ease;
+        }
+        .btn-save-variation:hover {
+            background: #8257e5;
+            border-color: #8257e5;
+            color: #ffffff;
+            box-shadow: 0 2px 10px rgba(130, 87, 229, 0.35);
+        }
+
+        /* Container de Rolagem Segura e Suave para o Teclado */
+        .piano-scroll-container {
+            width: 100%;
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding-bottom: 6px;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+            scrollbar-color: #323238 transparent;
+        }
+
+        .piano-scroll-container::-webkit-scrollbar {
+            height: 6px;
+        }
+        .piano-scroll-container::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 3px;
+        }
+        .piano-scroll-container::-webkit-scrollbar-thumb {
+            background: #323238;
+            border-radius: 3px;
+        }
+        .piano-scroll-container::-webkit-scrollbar-thumb:hover {
+            background: #8257e5;
+        }
+
+        /* Estrutura do Teclado Fluido */
+        .piano { 
+            display: flex; 
+            position: relative; 
+            user-select: none;
+            margin: 0 auto;
+            width: max-content;
+        }
+
+        /* Tecla Branca */
+        .key { 
+            width: var(--white-key-w); 
+            height: var(--white-key-h); 
+            background: linear-gradient(180deg, #fafafa 0%, #ffffff 100%); 
+            border: 1px solid #c4c4cc; 
+            border-radius: 0 0 var(--key-radius) var(--key-radius); 
+            box-sizing: border-box; 
+            display: flex; 
+            align-items: flex-end; 
+            justify-content: center; 
+            padding-bottom: clamp(6px, 1.2vw, 14px); 
+            color: #71717a; 
+            font-size: var(--font-note-white);
+            font-weight: 700; 
+            z-index: 1;
+            position: relative;
+            transition: background 0.15s ease, color 0.15s ease;
+        }
+
+        /* Tecla Preta */
+        .key.black { 
+            width: var(--black-key-w); 
+            height: var(--black-key-h); 
+            background: linear-gradient(180deg, #27272a 0%, #121214 100%); 
+            color: transparent; 
+            position: absolute; 
+            left: calc(var(--white-index) * var(--white-key-w));
+            transform: translateX(-50%);
+            z-index: 2; 
+            border-radius: 0 0 clamp(2px, 0.5vw, 4px) clamp(2px, 0.5vw, 4px); 
+            border: 1px solid #09090a;
+            border-top: none;
+            padding-bottom: clamp(4px, 1vw, 10px);
+            font-size: var(--font-note-black);
+            font-weight: 700;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.5);
+        }
+        
+        /* Estado Ativo (Tecla Pressionada) */
+        .key.active { 
+            background: linear-gradient(180deg, #996dff 0%, #8257e5 100%); 
+            color: #ffffff; 
+            border-color: #6a39d8; 
+            box-shadow: 0 4px 12px rgba(130, 87, 229, 0.5), inset 0 -2px 6px rgba(0, 0, 0, 0.2);
+        }
+        .key.black.active { 
+            background: linear-gradient(180deg, #996dff 0%, #8257e5 100%); 
+            color: #ffffff;
+            border-color: #6a39d8;
+            box-shadow: 0 4px 10px rgba(130, 87, 229, 0.6);
+        }
+
+        /* =========================================================
+           SEÇÃO DOS SLOTS DE ACORDES SALVOS (MÚSICA / SEQUÊNCIA)
+        ========================================================= */
+        .slots-section {
+            width: 100%;
+            max-width: 840px;
+            margin-top: clamp(2.5rem, 5vw, 3.5rem);
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .slots-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid #29292e;
+        }
+
+        .slots-title-area h2 {
+            margin: 0 0 0.3rem 0;
+            font-size: clamp(1.2rem, 3vw, 1.5rem);
+            color: #ffffff;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .slots-subtitle {
+            margin: 0;
+            color: #a8a8b3;
+            font-size: clamp(0.8rem, 1.8vw, 0.9rem);
+        }
+
+        .btn-clear-slots {
+            width: auto;
+            min-height: 38px;
+            background: transparent;
+            border: 1px solid #323238;
+            color: #e1e1e6;
+            padding: 0.45rem 0.9rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .btn-clear-slots:hover {
+            background: rgba(229, 77, 46, 0.12);
+            border-color: #e54d2e;
+            color: #ff8566;
+            box-shadow: none;
+        }
+
+        .slots-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+            gap: 1.25rem;
+        }
+
+        @media (max-width: 768px) {
+            .slots-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Card Individual do Slot */
+        .slot-card {
+            background: #202024;
+            border: 1px solid #29292e;
+            border-radius: 12px;
+            padding: 1.15rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, transform 0.2s ease;
+            position: relative;
+        }
+
+        /* Estados de Drag & Drop */
+        .slot-card[draggable="true"] {
+            cursor: grab;
+        }
+        .slot-card[draggable="true"]:active {
+            cursor: grabbing;
+        }
+        .slot-card.dragging {
+            opacity: 0.4;
+            border: 2px dashed #8257e5;
+            transform: scale(0.97);
+        }
+        .slot-card.drag-over {
+            border-color: #8257e5;
+            background: rgba(130, 87, 229, 0.16);
+            box-shadow: 0 0 0 3px rgba(130, 87, 229, 0.45);
+            transform: translateY(-2px);
+        }
+
+        .slot-card.empty {
+            border: 2px dashed #323238;
+            background: rgba(32, 32, 36, 0.4);
+            min-height: 120px;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            cursor: pointer;
+            padding: 1.5rem 1rem;
+        }
+
+        .slot-card.empty:hover {
+            border-color: #8257e5;
+            background: rgba(130, 87, 229, 0.05);
+        }
+
+        .slot-card.empty.selected-target {
+            border-color: #8257e5;
+            background: rgba(130, 87, 229, 0.1);
+            box-shadow: 0 0 0 2px rgba(130, 87, 229, 0.35);
+        }
+
+        .empty-slot-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .empty-slot-number {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #71717a;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .empty-slot-text {
+            font-size: 0.85rem;
+            color: #a8a8b3;
+        }
+
+        .slot-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .slot-card-header-left {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .slot-drag-handle {
+            color: #71717a;
+            font-size: 1.1rem;
+            cursor: grab;
+            line-height: 1;
+            user-select: none;
+            padding: 0 0.2rem;
+            transition: color 0.15s ease;
+        }
+        .slot-drag-handle:hover {
+            color: #a78bfa;
+        }
+
+        .slot-badge {
+            background: #121214;
+            border: 1px solid #323238;
+            color: #a8a8b3;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 0.2rem 0.55rem;
+            border-radius: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .slot-badge.active-target {
+            border-color: #8257e5;
+            color: #c4b5fd;
+            background: rgba(130, 87, 229, 0.15);
+        }
+
+        .slot-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .btn-load-slot {
+            width: auto;
+            min-height: 28px;
+            background: #2a2a30;
+            border: 1px solid #3d3d45;
+            color: #e1e1e6;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.2rem 0.55rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .btn-load-slot:hover {
+            background: #8257e5;
+            border-color: #8257e5;
+            color: #ffffff;
+            box-shadow: none;
+        }
+
+        .btn-remove-slot {
+            width: auto;
+            min-height: 28px;
+            background: transparent;
+            border: none;
+            color: #71717a;
+            cursor: pointer;
+            font-size: 1rem;
+            padding: 0.2rem 0.45rem;
+            border-radius: 5px;
+            line-height: 1;
+            transition: color 0.15s, background 0.15s;
+        }
+        .btn-remove-slot:hover {
+            color: #ff6b6b;
+            background: rgba(255, 107, 107, 0.12);
+            box-shadow: none;
+        }
+
+        .slot-chord-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .slot-chord-name {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: #ffffff;
+            margin: 0;
+            display: flex;
+            align-items: baseline;
+            gap: 0.4rem;
+        }
+
+        .slot-inversion-name {
+            font-size: 0.8rem;
+            color: #a8a8b3;
+            font-weight: 500;
+        }
+
+        .slot-notes-pill {
+            background: #121214;
+            border: 1px solid #323238;
+            color: #a78bfa;
+            font-size: 0.78rem;
+            font-weight: 600;
+            padding: 0.25rem 0.6rem;
+            border-radius: 12px;
+        }
+
+        /* Mini Teclado Adaptado para o Card do Slot */
+        .slot-card .piano-scroll-container {
+            padding-bottom: 2px;
+            margin-top: 0.2rem;
+            display: flex;
+            justify-content: center;
+        }
+
+        .slot-card .piano {
+            --white-key-w: clamp(15px, calc((100vw - 80px) / 14), 22px);
+            --white-key-h: calc(var(--white-key-w) * 3.4);
+            --black-key-w: calc(var(--white-key-w) * 0.65);
+            --black-key-h: calc(var(--white-key-h) * 0.62);
+            --font-note-white: clamp(0.42rem, 1vw, 0.62rem);
+            --font-note-black: clamp(0.35rem, 0.8vw, 0.52rem);
+            --key-radius: 3px;
+        }
+
+        /* Notificação Toast */
+        .toast-notification {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: #202024;
+            border: 1px solid #8257e5;
+            color: #ffffff;
+            padding: 0.85rem 1.25rem;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            z-index: 9999;
+            opacity: 0;
+            transform: translateY(20px);
+            pointer-events: none;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        .toast-notification.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        @media (max-width: 500px) {
+            .toast-notification {
+                bottom: 1rem;
+                right: 1rem;
+                left: 1rem;
+                justify-content: center;
+            }
+        }
+
+        /* Footer */
+        footer {
+            margin-top: auto;
+            padding: clamp(2rem, 4vw, 3rem) 0 1rem 0;
+            text-align: center;
+            width: 100%;
+            font-size: 0.9rem;
+            color: #a8a8b3;
+        }
+        footer a {
+            color: #8257e5;
+            text-decoration: none;
+            font-weight: 700;
+            transition: color 0.2s;
+        }
+        footer a:hover {
+            color: #996dff;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Dicionário de Acordes e Inversões</h1>
+        <p class="subtitle">Monte seus acordes e organize a sequência arrastando os slots</p>
+    </header>
+    
+    <div class="controls-card">
+        <div class="controls">
+            <div class="control-group">
+                <label for="root">Nota Fundamental</label>
+                <select id="root">
+                    <option value="C">C (Dó)</option>
+                    <option value="C#">C# / Db</option>
+                    <option value="D">D (Ré)</option>
+                    <option value="D#">D# / Eb</option>
+                    <option value="E">E (Mi)</option>
+                    <option value="F">F (Fá)</option>
+                    <option value="F#">F# / Gb</option>
+                    <option value="G">G (Sol)</option>
+                    <option value="G#">G# / Ab</option>
+                    <option value="A">A (Lá)</option>
+                    <option value="A#">A# / Bb</option>
+                    <option value="B">B (Si)</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label for="type">Tipo de Acorde</label>
+                <select id="type">
+                    <optgroup label="Tríades">
+                        <option value="major">Maior (M)</option>
+                        <option value="minor">Menor (m)</option>
+                        <option value="dim">Diminuto (dim / °)</option>
+                        <option value="aug">Aumentado (aug / +)</option>
+                    </optgroup>
+                    <optgroup label="Sétimas (7)">
+                        <option value="7">Com 7ª Dominante (7)</option>
+                        <option value="maj7">Com 7ª Maior (7M / maj7)</option>
+                        <option value="m7">Menor com 7ª (m7)</option>
+                        <option value="mMaj7">Menor com 7ª Maior (m7M)</option>
+                        <option value="m7b5">Meio-Diminuto (m7(b5) / ø)</option>
+                        <option value="dim7">Diminuto Completo (dim7 / °)</option>
+                    </optgroup>
+                    <optgroup label="Suspensos e Sextas (sus / 6)">
+                        <option value="sus4">Suspenso 4 (sus4)</option>
+                        <option value="sus2">Suspenso 2 (sus2)</option>
+                        <option value="7sus4">Com 7ª e 4ª Suspensa (7sus4)</option>
+                        <option value="6">Com 6ª Maior (6)</option>
+                        <option value="m6">Menor com 6ª (m6)</option>
+                    </optgroup>
+                    <optgroup label="Nonas (9 / add9)">
+                        <option value="add9">Com 9ª Adicionada (add9)</option>
+                        <option value="mAdd9">Menor com 9ª Adicionada (m(add9))</option>
+                        <option value="9">Dominante com 9ª (9)</option>
+                        <option value="maj9">Maior com 7ª e 9ª (7M(9))</option>
+                        <option value="m9">Menor com 7ª e 9ª (m9)</option>
+                    </optgroup>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label for="save-inversion">Montagem a Salvar</label>
+                <select id="save-inversion">
+                    <option value="0">Estado Fundamental</option>
+                    <option value="1">1ª Inversão (Primário)</option>
+                    <option value="2">2ª Inversão (Secundário)</option>
+                    <option value="3">3ª Inversão (Sétima no Baixo)</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label for="target-slot">Destino do Slot</label>
+                <select id="target-slot">
+                    <option value="auto">Automático (Próximo livre)</option>
+                    <option value="0">Slot 1</option>
+                    <option value="1">Slot 2</option>
+                    <option value="2">Slot 3</option>
+                    <option value="3">Slot 4</option>
+                    <option value="4">Slot 5</option>
+                    <option value="5">Slot 6</option>
+                    <option value="6">Slot 7</option>
+                    <option value="7">Slot 8</option>
+                    <option value="8">Slot 9</option>
+                    <option value="9">Slot 10</option>
+                </select>
+            </div>
+            
+            <div class="control-group btn-group">
+                <button type="button" class="btn-save-main" onclick="saveCurrentChord()">
+                    <span>💾 Salvar Acorde</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pianos das Inversões em Tempo Real -->
+    <div class="chords-grid">
+        <!-- Estado Fundamental -->
+        <div class="piano-wrapper" id="piano-wrapper-root">
+            <div class="piano-header">
+                <div class="piano-header-left">
+                    <h2 id="name-root">Estado Fundamental</h2>
+                    <span class="notes-badge" id="notes-root">Notas: -</span>
+                </div>
+                <button type="button" class="btn-save-variation" onclick="saveCurrentChord(0)" title="Salvar Estado Fundamental no slot">
+                    💾 Salvar no Slot
+                </button>
+            </div>
+            <div class="piano-scroll-container">
+                <div class="piano" id="piano-root"></div>
+            </div>
+        </div>
+
+        <!-- 1ª Inversão -->
+        <div class="piano-wrapper" id="piano-wrapper-inv1">
+            <div class="piano-header">
+                <div class="piano-header-left">
+                    <h2 id="name-inv1">1ª Inversão (Acorde Primário)</h2>
+                    <span class="notes-badge" id="notes-inv1">Notas: -</span>
+                </div>
+                <button type="button" class="btn-save-variation" onclick="saveCurrentChord(1)" title="Salvar 1ª Inversão no slot">
+                    💾 Salvar no Slot
+                </button>
+            </div>
+            <div class="piano-scroll-container">
+                <div class="piano" id="piano-inv1"></div>
+            </div>
+        </div>
+
+        <!-- 2ª Inversão -->
+        <div class="piano-wrapper" id="piano-wrapper-inv2">
+            <div class="piano-header">
+                <div class="piano-header-left">
+                    <h2 id="name-inv2">2ª Inversão (Acorde Secundário)</h2>
+                    <span class="notes-badge" id="notes-inv2">Notas: -</span>
+                </div>
+                <button type="button" class="btn-save-variation" onclick="saveCurrentChord(2)" title="Salvar 2ª Inversão no slot">
+                    💾 Salvar no Slot
+                </button>
+            </div>
+            <div class="piano-scroll-container">
+                <div class="piano" id="piano-inv2"></div>
+            </div>
+        </div>
+
+        <!-- 3ª Inversão (Para Tétrades / Acordes de 4 notas ou mais) -->
+        <div class="piano-wrapper hidden" id="piano-wrapper-inv3">
+            <div class="piano-header">
+                <div class="piano-header-left">
+                    <h2 id="name-inv3">3ª Inversão (Sétima no Baixo)</h2>
+                    <span class="notes-badge" id="notes-inv3">Notas: -</span>
+                </div>
+                <button type="button" class="btn-save-variation" onclick="saveCurrentChord(3)" title="Salvar 3ª Inversão no slot">
+                    💾 Salvar no Slot
+                </button>
+            </div>
+            <div class="piano-scroll-container">
+                <div class="piano" id="piano-inv3"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Seção de Slots Salvos da Música -->
+    <section class="slots-section">
+        <div class="slots-header">
+            <div class="slots-title-area">
+                <h2>🎵 Acordes Salvos da Música (Até 10 Slots)</h2>
+                <p class="slots-subtitle">Arraste e solte os slots para reordenar a sequência da sua música</p>
+            </div>
+            <button type="button" class="btn-clear-slots" onclick="clearAllSlots()" title="Limpar todos os 10 slots">
+                🗑️ Limpar Todos
+            </button>
+        </div>
+
+        <div class="slots-grid" id="slots-grid">
+            <!-- 10 Slots serão renderizados dinamicamente via JavaScript -->
+        </div>
+    </section>
+
+    <!-- Notificação Flutuante -->
+    <div id="toast" class="toast-notification"></div>
+
+    <footer>
+        Desenvolvido por <a href="https://www.juniorpinhodev.com.br" target="_blank" rel="noopener noreferrer">Junior Pinho | DEV</a>
+    </footer>
+
+    <script>
+        // Notas cromáticas iniciando em C (Dó)
+        const notes = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+        
+        // Mapeamento Completo de Intervalos em Semitons
+        const chordTypes = {
+            // Tríades
+            major:  [0, 4, 7],
+            minor:  [0, 3, 7],
+            dim:    [0, 3, 6],
+            aug:    [0, 4, 8],
+
+            // Sétimas (Tétrades)
+            "7":    [0, 4, 7, 10],      // Dominante
+            maj7:   [0, 4, 7, 11],      // 7ª Maior
+            m7:     [0, 3, 7, 10],      // Menor com 7ª
+            mMaj7:  [0, 3, 7, 11],      // Menor com 7ª Maior
+            m7b5:   [0, 3, 6, 10],      // Meio-diminuto
+            dim7:   [0, 3, 6, 9],       // Diminuto com 7ª diminuta
+
+            // Suspensos e Sextas
+            sus4:   [0, 5, 7],          // Suspenso 4ª
+            sus2:   [0, 2, 7],          // Suspenso 2ª
+            "7sus4":[0, 5, 7, 10],      // 7ª com 4ª suspensa
+            "6":    [0, 4, 7, 9],       // Maior com 6ª
+            m6:     [0, 3, 7, 9],       // Menor com 6ª
+
+            // Nonas
+            add9:   [0, 4, 7, 14],      // Tríade + 9ª
+            mAdd9:  [0, 3, 7, 14],      // Menor + 9ª
+            "9":    [0, 4, 7, 10, 14],  // Dominante com 9ª
+            maj9:   [0, 4, 7, 11, 14],  // 7ª Maior e 9ª
+            m9:     [0, 3, 7, 10, 14]   // Menor com 7ª e 9ª
+        };
+
+        const typeLabels = {
+            major:  "Maior",
+            minor:  "Menor",
+            dim:    "Diminuto",
+            aug:    "Aumentado",
+            "7":    "com 7ª Dominante",
+            maj7:   "com 7ª Maior",
+            m7:     "Menor com 7ª",
+            mMaj7:  "Menor com 7ª Maior",
+            m7b5:   "Meio-Diminuto",
+            dim7:   "Diminuto Completo",
+            sus4:   "Suspenso 4",
+            sus2:   "Suspenso 2",
+            "7sus4":"com 7ª e 4ª Suspensa",
+            "6":    "com 6ª",
+            m6:     "Menor com 6ª",
+            add9:   "com 9ª Adicionada",
+            mAdd9:  "Menor com 9ª Adicionada",
+            "9":    "Dominante com 9ª",
+            maj9:   "Maior com 7ª e 9ª",
+            m9:     "Menor com 7ª e 9ª"
+        };
+
+        const typeSymbols = {
+            major:  "",
+            minor:  "m",
+            dim:    "dim",
+            aug:    "aug",
+            "7":    "7",
+            maj7:   "7M",
+            m7:     "m7",
+            mMaj7:  "m7M",
+            m7b5:   "m7(b5)",
+            dim7:   "dim7",
+            sus4:   "sus4",
+            sus2:   "sus2",
+            "7sus4":"7sus4",
+            "6":    "6",
+            m6:     "m6",
+            add9:   "add9",
+            mAdd9:  "m(add9)",
+            "9":    "9",
+            maj9:   "7M(9)",
+            m9:     "m9"
+        };
+
+        const STORAGE_KEY = 'acordes_teclado_slots_v1';
+        let savedSlots = loadSavedSlots();
+        let draggedSlotIndex = null;
+
+        // Constrói 2 oitavas exatas (24 teclas) iniciando sempre no Dó
+        function renderPiano(containerOrId) {
+            const container = typeof containerOrId === 'string' 
+                ? document.getElementById(containerOrId) 
+                : containerOrId;
+            if (!container) return;
+            
+            container.innerHTML = '';
+            let whiteKeysCount = 0;
+            
+            // 24 teclas (2 oitavas completas, indo de C a B duas vezes)
+            for (let i = 0; i < 24; i++) {
+                const noteName = notes[i % 12];
+                const isBlack = noteName.includes('#');
+                const key = document.createElement('div');
+                
+                key.className = `key ${isBlack ? 'black' : 'white'}`;
+                key.dataset.index = i;
+                key.dataset.note = noteName;
+                
+                if (isBlack) {
+                    key.style.setProperty('--white-index', whiteKeysCount);
+                    key.textContent = noteName;
+                } else {
+                    key.textContent = noteName;
+                    whiteKeysCount++;
+                }
+                
+                container.appendChild(key);
+            }
+        }
+
+        // Função que acende as teclas especificadas
+        function drawChord(containerOrId, keysToHighlight) {
+            const container = typeof containerOrId === 'string' 
+                ? document.getElementById(containerOrId) 
+                : containerOrId;
+            if (!container) return;
+            
+            container.querySelectorAll('.key').forEach(k => k.classList.remove('active'));
+            keysToHighlight.forEach(keyIndex => {
+                const keyElement = container.querySelector(`.key[data-index="${keyIndex}"]`);
+                if (keyElement) {
+                    keyElement.classList.add('active');
+                }
+            });
+        }
+
+        // Helper para garantir que qualquer acorde caiba no intervalo de 2 oitavas [0..23]
+        function fitTo2Octaves(chordKeys) {
+            let keys = [...chordKeys];
+            while (Math.max(...keys) >= 24) {
+                keys = keys.map(k => k - 12);
+            }
+            while (Math.min(...keys) < 0) {
+                keys = keys.map(k => k + 12);
+            }
+            return keys;
+        }
+
+        // Formata as notas do acorde em sequência textual
+        function formatNotesText(chordKeys) {
+            return 'Notas: ' + chordKeys.map(k => notes[((k % 12) + 12) % 12]).join(' • ');
+        }
+
+        // Geração matemática das Inversões para qualquer número de notas
+        function calculateInversions(intervals, rootIndex) {
+            const numNotes = intervals.length;
+            const maxInv = Math.min(numNotes, 4); // até 4 inversões (Fund, 1ª, 2ª e 3ª)
+            const inversions = [];
+
+            for (let k = 0; k < maxInv; k++) {
+                const pitchCollection = [];
+                for (let i = k; i < numNotes; i++) {
+                    pitchCollection.push(rootIndex + intervals[i]);
+                }
+                for (let i = 0; i < k; i++) {
+                    pitchCollection.push(rootIndex + intervals[i] + 12);
+                }
+                inversions.push(fitTo2Octaves(pitchCollection));
+            }
+            return inversions;
+        }
+
+        function getInversionDescriptions(numNotes) {
+            if (numNotes >= 4) {
+                return [
+                    { name: "Estado Fundamental", short: "Fund.", desc: "Tônica no Baixo" },
+                    { name: "1ª Inversão", short: "1ª Inv.", desc: "Terça no Baixo" },
+                    { name: "2ª Inversão", short: "2ª Inv.", desc: "Quinta no Baixo" },
+                    { name: "3ª Inversão", short: "3ª Inv.", desc: "Sétima no Baixo" }
+                ];
+            } else {
+                return [
+                    { name: "Estado Fundamental", short: "Fund.", desc: "Tônica no Baixo" },
+                    { name: "1ª Inversão (Primário)", short: "1ª Inv.", desc: "Terça no Baixo" },
+                    { name: "2ª Inversão (Secundário)", short: "2ª Inv.", desc: "Quinta no Baixo" }
+                ];
+            }
+        }
+
+        // Atualiza as opções do dropdown "Montagem a Salvar"
+        function updateInversionSelect(numNotes) {
+            const select = document.getElementById('save-inversion');
+            const currentVal = select.value;
+            const descriptions = getInversionDescriptions(numNotes);
+            
+            let html = '';
+            descriptions.forEach((item, idx) => {
+                html += `<option value="${idx}">${item.name} (${item.desc})</option>`;
+            });
+            select.innerHTML = html;
+
+            if (parseInt(currentVal, 10) < descriptions.length) {
+                select.value = currentVal;
+            } else {
+                select.value = "0";
+            }
+        }
+
+        // Montagem e desenho dos pianos principais em tempo real
+        function drawAllInversions() {
+            const rootNote = document.getElementById('root').value;
+            const type = document.getElementById('type').value;
+            
+            const rootIndex = notes.indexOf(rootNote);
+            const intervals = chordTypes[type] || [0, 4, 7];
+            const numNotes = intervals.length;
+            const inversions = calculateInversions(intervals, rootIndex);
+            const chordSymbol = `${rootNote}${typeSymbols[type] || ''}`;
+
+            updateInversionSelect(numNotes);
+
+            // Inversão 0 (Fundamental)
+            document.getElementById('name-root').textContent = `${chordSymbol} - Estado Fundamental`;
+            document.getElementById('notes-root').textContent = formatNotesText(inversions[0]);
+            drawChord('piano-root', inversions[0]);
+
+            // Inversão 1
+            if (inversions.length > 1) {
+                document.getElementById('name-inv1').textContent = `${chordSymbol} - 1ª Inversão`;
+                document.getElementById('notes-inv1').textContent = formatNotesText(inversions[1]);
+                drawChord('piano-inv1', inversions[1]);
+            }
+
+            // Inversão 2
+            if (inversions.length > 2) {
+                document.getElementById('name-inv2').textContent = `${chordSymbol} - 2ª Inversão`;
+                document.getElementById('notes-inv2').textContent = formatNotesText(inversions[2]);
+                drawChord('piano-inv2', inversions[2]);
+            }
+
+            // Inversão 3 (Tétrades / 4 notas ou mais)
+            const wrapperInv3 = document.getElementById('piano-wrapper-inv3');
+            if (inversions.length > 3) {
+                wrapperInv3.classList.remove('hidden');
+                document.getElementById('name-inv3').textContent = `${chordSymbol} - 3ª Inversão (Sétima no Baixo)`;
+                document.getElementById('notes-inv3').textContent = formatNotesText(inversions[3]);
+                drawChord('piano-inv3', inversions[3]);
+            } else {
+                wrapperInv3.classList.add('hidden');
+            }
+        }
+
+        // =========================================================
+        // GERENCIAMENTO DE SLOTS (PERSISTÊNCIA E AÇÕES)
+        // =========================================================
+
+        function loadSavedSlots() {
+            try {
+                const stored = localStorage.getItem(STORAGE_KEY);
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    if (Array.isArray(parsed) && parsed.length === 10) {
+                        return parsed;
+                    }
+                }
+            } catch (err) {
+                console.error('Erro ao ler slots:', err);
+            }
+            return Array(10).fill(null);
+        }
+
+        function persistSlots() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(savedSlots));
+            } catch (err) {
+                console.error('Erro ao salvar slots:', err);
+            }
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            clearTimeout(toast._timeout);
+            toast._timeout = setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3200);
+        }
+
+        function updateTargetSlotSelect() {
+            const select = document.getElementById('target-slot');
+            const currentVal = select.value;
+            const nextFreeIndex = savedSlots.findIndex(s => s === null);
+            
+            let html = `<option value="auto">Automático (${nextFreeIndex !== -1 ? 'Próximo: Slot ' + (nextFreeIndex + 1) : 'Todos Ocupados'})</option>`;
+            for (let i = 0; i < 10; i++) {
+                const slot = savedSlots[i];
+                const info = slot ? `${slot.chordName} (${slot.inversionShort})` : 'Vazio';
+                html += `<option value="${i}">Slot ${i + 1} [${info}]</option>`;
+            }
+            select.innerHTML = html;
+
+            if (currentVal !== 'auto' && parseInt(currentVal, 10) >= 0 && parseInt(currentVal, 10) < 10) {
+                select.value = currentVal;
+            } else {
+                select.value = 'auto';
+            }
+        }
+
+        // Troca direta de posição entre dois slots (Swap)
+        function swapSlots(fromIndex, toIndex) {
+            if (fromIndex === toIndex || fromIndex < 0 || fromIndex >= 10 || toIndex < 0 || toIndex >= 10) return;
+            
+            const temp = savedSlots[fromIndex];
+            savedSlots[fromIndex] = savedSlots[toIndex];
+            savedSlots[toIndex] = temp;
+            
+            persistSlots();
+            renderSlots();
+            updateTargetSlotSelect();
+
+            const nameTo = savedSlots[toIndex] ? savedSlots[toIndex].chordName : 'Vazio';
+            const nameFrom = savedSlots[fromIndex] ? savedSlots[fromIndex].chordName : 'Vazio';
+            showToast(`↔ Trocados: Slot ${fromIndex + 1} (${nameFrom}) e Slot ${toIndex + 1} (${nameTo})`);
+        }
+
+        // Drag & Drop Handlers Nativos (Mouse)
+        function handleDragStart(e, index) {
+            draggedSlotIndex = index;
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', index.toString());
+            const card = document.getElementById(`slot-card-${index}`);
+            if (card) {
+                setTimeout(() => card.classList.add('dragging'), 0);
+            }
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+        }
+
+        function handleDragEnter(e, index) {
+            e.preventDefault();
+            if (draggedSlotIndex !== null && draggedSlotIndex !== index) {
+                const card = document.getElementById(`slot-card-${index}`);
+                if (card) card.classList.add('drag-over');
+            }
+        }
+
+        function handleDragLeave(e, index) {
+            const card = document.getElementById(`slot-card-${index}`);
+            if (card) card.classList.remove('drag-over');
+        }
+
+        function handleDrop(e, targetIndex) {
+            e.preventDefault();
+            const card = document.getElementById(`slot-card-${targetIndex}`);
+            if (card) card.classList.remove('drag-over');
+
+            if (draggedSlotIndex !== null && draggedSlotIndex !== targetIndex) {
+                swapSlots(draggedSlotIndex, targetIndex);
+            }
+            draggedSlotIndex = null;
+        }
+
+        function handleDragEnd() {
+            draggedSlotIndex = null;
+            document.querySelectorAll('.slot-card').forEach(card => {
+                card.classList.remove('dragging', 'drag-over');
+            });
+        }
+
+        // Suporte a Touch Drag & Drop para dispositivos móveis
+        let touchDraggedIndex = null;
+        let touchCardEl = null;
+
+        function handleTouchStart(e, index) {
+            if (e.target.closest('button')) return;
+            touchDraggedIndex = index;
+            touchCardEl = document.getElementById(`slot-card-${index}`);
+            if (touchCardEl) touchCardEl.classList.add('dragging');
+        }
+
+        function handleTouchMove(e) {
+            if (touchDraggedIndex === null) return;
+            const touch = e.touches[0];
+            const elementUnder = document.elementFromPoint(touch.clientX, touch.clientY);
+            const targetCard = elementUnder ? elementUnder.closest('.slot-card') : null;
+
+            document.querySelectorAll('.slot-card').forEach(c => c.classList.remove('drag-over'));
+            if (targetCard && targetCard.id !== `slot-card-${touchDraggedIndex}`) {
+                targetCard.classList.add('drag-over');
+            }
+        }
+
+        function handleTouchEnd(e) {
+            if (touchDraggedIndex === null) return;
+            const touch = e.changedTouches[0];
+            const elementUnder = document.elementFromPoint(touch.clientX, touch.clientY);
+            const targetCard = elementUnder ? elementUnder.closest('.slot-card') : null;
+
+            if (targetCard) {
+                const targetIdx = parseInt(targetCard.id.replace('slot-card-', ''), 10);
+                if (!isNaN(targetIdx) && targetIdx !== touchDraggedIndex) {
+                    swapSlots(touchDraggedIndex, targetIdx);
+                }
+            }
+
+            touchDraggedIndex = null;
+            if (touchCardEl) touchCardEl.classList.remove('dragging');
+            touchCardEl = null;
+            document.querySelectorAll('.slot-card').forEach(card => {
+                card.classList.remove('dragging', 'drag-over');
+            });
+        }
+
+        // Salvar acorde no slot
+        function saveCurrentChord(forcedInversion = null) {
+            const rootNote = document.getElementById('root').value;
+            const type = document.getElementById('type').value;
+            const intervals = chordTypes[type] || [0, 4, 7];
+            const rootIndex = notes.indexOf(rootNote);
+            const inversions = calculateInversions(intervals, rootIndex);
+            const descriptions = getInversionDescriptions(intervals.length);
+
+            let inversionIdx = forcedInversion !== null 
+                ? forcedInversion 
+                : parseInt(document.getElementById('save-inversion').value, 10);
+            
+            if (inversionIdx >= inversions.length) {
+                inversionIdx = 0;
+            }
+
+            // Determina qual slot receberá o acorde
+            const targetSelect = document.getElementById('target-slot');
+            let targetIndex;
+            
+            if (targetSelect.value === 'auto') {
+                targetIndex = savedSlots.findIndex(s => s === null);
+                if (targetIndex === -1) {
+                    targetIndex = 0;
+                    showToast('⚠️ Todos os 10 slots estavam ocupados. Substituindo o Slot 1.');
+                }
+            } else {
+                targetIndex = parseInt(targetSelect.value, 10);
+            }
+
+            const chosenKeys = inversions[inversionIdx];
+            const invMeta = descriptions[inversionIdx] || { name: `Inversão ${inversionIdx}`, short: `${inversionIdx}ª Inv.` };
+            const chordSymbol = `${rootNote}${typeSymbols[type] || ''}`;
+            const chordFullName = `${rootNote} ${typeLabels[type] || ''}`;
+
+            const newSlotData = {
+                root: rootNote,
+                type: type,
+                chordName: chordSymbol,
+                chordFullName: chordFullName,
+                inversionIdx: inversionIdx,
+                inversionName: invMeta.name,
+                inversionShort: invMeta.short,
+                keys: chosenKeys,
+                notesText: chosenKeys.map(k => notes[((k % 12) + 12) % 12]).join(' • ')
+            };
+
+            savedSlots[targetIndex] = newSlotData;
+            persistSlots();
+            renderSlots();
+            updateTargetSlotSelect();
+
+            showToast(`✓ ${chordSymbol} (${invMeta.short}) salvo no Slot ${targetIndex + 1}!`);
+        }
+
+        // Limpar um slot individual
+        function removeSlot(index, event) {
+            if (event) event.stopPropagation();
+            savedSlots[index] = null;
+            persistSlots();
+            renderSlots();
+            updateTargetSlotSelect();
+            showToast(`Slot ${index + 1} limpo.`);
+        }
+
+        // Limpar todos os 10 slots
+        function clearAllSlots() {
+            if (savedSlots.every(s => s === null)) {
+                showToast('Nenhum acorde salvo para limpar.');
+                return;
+            }
+            if (confirm('Deseja realmente limpar todos os 10 slots salvos da música?')) {
+                savedSlots = Array(10).fill(null);
+                persistSlots();
+                renderSlots();
+                updateTargetSlotSelect();
+                showToast('Todos os slots foram limpos.');
+            }
+        }
+
+        // Selecionar um slot vazio como próximo destino
+        function selectTargetSlot(index) {
+            document.getElementById('target-slot').value = index;
+            renderSlots();
+            showToast(`Destino definido: Slot ${index + 1}.`);
+        }
+
+        // Carregar um acorde do slot de volta para os seletores
+        function loadSlotIntoControls(index) {
+            const slot = savedSlots[index];
+            if (!slot) return;
+            document.getElementById('root').value = slot.root;
+            document.getElementById('type').value = slot.type;
+            drawAllInversions();
+            
+            setTimeout(() => {
+                document.getElementById('save-inversion').value = slot.inversionIdx;
+            }, 0);
+
+            showToast(`Carregado: ${slot.chordName} nos seletores.`);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Renderiza os 10 slots no grid com Drag and Drop nativo
+        function renderSlots() {
+            const container = document.getElementById('slots-grid');
+            container.innerHTML = '';
+            
+            const targetSelect = document.getElementById('target-slot');
+            const selectedTargetIndex = targetSelect.value === 'auto' 
+                ? savedSlots.findIndex(s => s === null) 
+                : parseInt(targetSelect.value, 10);
+
+            for (let i = 0; i < 10; i++) {
+                const slot = savedSlots[i];
+                const card = document.createElement('div');
+                card.id = `slot-card-${i}`;
+                const isCurrentTarget = (i === selectedTargetIndex);
+
+                // Configuração comum de Drop Target
+                card.ondragover = handleDragOver;
+                card.ondragenter = (e) => handleDragEnter(e, i);
+                card.ondragleave = (e) => handleDragLeave(e, i);
+                card.ondrop = (e) => handleDrop(e, i);
+
+                if (!slot) {
+                    // Slot Vazio (Pode receber drop para mover um acorde para ele!)
+                    card.className = `slot-card empty ${isCurrentTarget ? 'selected-target' : ''}`;
+                    card.onclick = () => selectTargetSlot(i);
+                    card.innerHTML = `
+                        <div class="empty-slot-content">
+                            <span class="empty-slot-number">Slot ${i + 1}</span>
+                            <span class="empty-slot-text">${isCurrentTarget ? '🎯 Próximo a salvar (Clique para manter)' : '+ Slot Vazio (Arraste um acorde aqui)'}</span>
+                        </div>
+                    `;
+                } else {
+                    // Slot Ocupado (Draggable nativo)
+                    card.className = 'slot-card';
+                    card.draggable = true;
+                    card.ondragstart = (e) => handleDragStart(e, i);
+                    card.ondragend = handleDragEnd;
+                    card.ontouchstart = (e) => handleTouchStart(e, i);
+                    card.ontouchmove = handleTouchMove;
+                    card.ontouchend = handleTouchEnd;
+
+                    card.innerHTML = `
+                        <div class="slot-card-header">
+                            <div class="slot-card-header-left">
+                                <span class="slot-drag-handle" title="Arraste para reposicionar">⠿</span>
+                                <span class="slot-badge ${isCurrentTarget ? 'active-target' : ''}">
+                                    Slot ${i + 1} ${isCurrentTarget ? '• Alvo' : ''}
+                                </span>
+                            </div>
+                            <div class="slot-actions">
+                                <button type="button" class="btn-load-slot" onclick="loadSlotIntoControls(${i})" title="Carregar este acorde nos seletores">
+                                    Visualizar
+                                </button>
+                                <button type="button" class="btn-remove-slot" onclick="removeSlot(${i}, event)" title="Excluir este slot">
+                                    ✕
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="slot-chord-info">
+                            <div>
+                                <h3 class="slot-chord-name">
+                                    ${slot.chordName}
+                                    <span class="slot-inversion-name">• ${slot.inversionName}</span>
+                                </h3>
+                            </div>
+                            <span class="slot-notes-pill">${slot.notesText}</span>
+                        </div>
+
+                        <div class="piano-scroll-container">
+                            <div class="piano" id="slot-piano-${i}"></div>
+                        </div>
+                    `;
+
+                    // Renderiza o mini-teclado do slot
+                    setTimeout(() => {
+                        const miniPianoEl = document.getElementById(`slot-piano-${i}`);
+                        if (miniPianoEl) {
+                            renderPiano(miniPianoEl);
+                            drawChord(miniPianoEl, slot.keys);
+                        }
+                    }, 0);
+                }
+
+                container.appendChild(card);
+            }
+        }
+
+        // =========================================================
+        // INICIALIZAÇÃO E LISTENERS
+        // =========================================================
+
+        document.getElementById('root').addEventListener('change', drawAllInversions);
+        document.getElementById('type').addEventListener('change', drawAllInversions);
+        document.getElementById('target-slot').addEventListener('change', renderSlots);
+
+        // Inicializa a interface
+        renderPiano('piano-root');
+        renderPiano('piano-inv1');
+        renderPiano('piano-inv2');
+        renderPiano('piano-inv3');
+        drawAllInversions();
+
+        updateTargetSlotSelect();
+        renderSlots();
+    </script>
+</body>
+</html>
