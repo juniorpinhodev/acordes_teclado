@@ -543,6 +543,47 @@
             gap: 0.35rem;
         }
 
+        /* Botão Minimalista de Trava/Fixação */
+        .btn-lock-slot {
+            width: 28px;
+            height: 28px;
+            min-height: 28px;
+            padding: 0;
+            background: transparent;
+            border: 1px solid transparent;
+            color: #71717a;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-lock-slot:hover {
+            background: #2a2a30;
+            border-color: #3d3d45;
+            color: #e1e1e6;
+        }
+        .btn-lock-slot.locked {
+            color: #a78bfa;
+            background: rgba(130, 87, 229, 0.12);
+            border-color: rgba(130, 87, 229, 0.3);
+        }
+        .btn-lock-slot.locked:hover {
+            background: rgba(130, 87, 229, 0.22);
+            border-color: #8257e5;
+            color: #ffffff;
+        }
+
+        /* Card Travado: Sutil e Harmonioso */
+        .slot-card.locked {
+            border-color: rgba(130, 87, 229, 0.28);
+        }
+        .slot-card.locked .slot-drag-handle {
+            opacity: 0.2;
+            cursor: not-allowed;
+        }
+
         .btn-load-slot {
             width: auto;
             min-height: 28px;
@@ -684,9 +725,157 @@
             font-weight: 700;
             transition: color 0.2s;
         }
-        footer a:hover {
-            color: #996dff;
-            text-decoration: underline;
+        /* Modal de Confirmação Customizado */
+        .modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.72);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            padding: 1rem;
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: opacity 0.2s ease, visibility 0.2s ease;
+        }
+        .modal-backdrop.show {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+        .modal-card {
+            background: #1a1a1e;
+            border: 1px solid #323238;
+            border-radius: 14px;
+            max-width: 440px;
+            width: 100%;
+            padding: 1.5rem;
+            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.7);
+            transform: scale(0.94) translateY(8px);
+            transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            flex-direction: column;
+            gap: 0.9rem;
+        }
+        .modal-backdrop.show .modal-card {
+            transform: scale(1) translateY(0);
+        }
+        .modal-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .modal-icon-badge {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.25);
+            color: #f87171;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .modal-title {
+            margin: 0;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #ffffff;
+            line-height: 1.3;
+        }
+        .modal-body-text {
+            margin: 0;
+            font-size: 0.92rem;
+            color: #a8a8b3;
+            line-height: 1.5;
+        }
+        .modal-highlight-box {
+            background: #121214;
+            border: 1px solid #323238;
+            border-left: 3px solid #8257e5;
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .modal-highlight-text {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #ffffff;
+        }
+        .modal-highlight-detail {
+            font-size: 0.82rem;
+            color: #c4b5fd;
+            font-weight: 600;
+            background: rgba(130, 87, 229, 0.15);
+            padding: 0.2rem 0.5rem;
+            border-radius: 6px;
+        }
+        .modal-actions {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 0.4rem;
+        }
+        .btn-modal-cancel {
+            flex: 1;
+            min-height: 44px;
+            padding: 0.65rem 1rem;
+            border-radius: 8px;
+            border: 1px solid #3d3d45;
+            background: #2a2a30;
+            color: #e1e1e6;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            text-align: center;
+        }
+        .btn-modal-cancel:hover {
+            background: #36363d;
+            border-color: #4d4d57;
+            color: #ffffff;
+        }
+        .btn-modal-confirm {
+            flex: 1.15;
+            min-height: 44px;
+            padding: 0.65rem 1rem;
+            border-radius: 8px;
+            border: 1px solid #ef4444;
+            background: #dc2626;
+            color: #ffffff;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+        }
+        .btn-modal-confirm:hover {
+            background: #b91c1c;
+            border-color: #b91c1c;
+            box-shadow: 0 4px 14px rgba(220, 38, 38, 0.4);
+        }
+        @media (max-width: 440px) {
+            .modal-actions {
+                flex-direction: column-reverse;
+            }
+            .btn-modal-cancel, .btn-modal-confirm {
+                width: 100%;
+            }
         }
     </style>
 </head>
@@ -868,6 +1057,40 @@
             <!-- 10 Slots serão renderizados dinamicamente via JavaScript -->
         </div>
     </section>
+
+    <!-- Modal de Confirmação Customizado e Acessível -->
+    <div id="confirm-modal" class="modal-backdrop" aria-hidden="true" role="dialog" aria-modal="true">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-icon-badge">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 6h18"></path>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path>
+                        <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        <line x1="10" y1="11" x2="10" y2="17"></line>
+                        <line x1="14" y1="11" x2="14" y2="17"></line>
+                    </svg>
+                </div>
+                <h3 id="modal-title" class="modal-title">Excluir Acorde do Slot?</h3>
+            </div>
+            
+            <p id="modal-desc" class="modal-body-text">Tem certeza de que deseja remover este acorde da sua sequência?</p>
+            
+            <div class="modal-highlight-box">
+                <span id="modal-chord-name" class="modal-highlight-text">Slot 1: C</span>
+                <span id="modal-chord-inv" class="modal-highlight-detail">Estado Fundamental</span>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" id="modal-btn-cancel" class="btn-modal-cancel" onclick="closeConfirmModal()">
+                    Cancelar
+                </button>
+                <button type="button" id="modal-btn-confirm" class="btn-modal-confirm">
+                    🗑️ Deletar
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- Notificação Flutuante -->
     <div id="toast" class="toast-notification"></div>
@@ -1186,6 +1409,19 @@
         function swapSlots(fromIndex, toIndex) {
             if (fromIndex === toIndex || fromIndex < 0 || fromIndex >= 10 || toIndex < 0 || toIndex >= 10) return;
             
+            const slotFrom = savedSlots[fromIndex];
+            const slotTo = savedSlots[toIndex];
+
+            // Proteção contra movimentação de slots travados
+            if (slotFrom && slotFrom.locked) {
+                showToast(`Slot ${fromIndex + 1} está fixado. Libere a trava para mover.`);
+                return;
+            }
+            if (slotTo && slotTo.locked) {
+                showToast(`Slot ${toIndex + 1} está fixado. Libere a trava para substituir.`);
+                return;
+            }
+            
             const temp = savedSlots[fromIndex];
             savedSlots[fromIndex] = savedSlots[toIndex];
             savedSlots[toIndex] = temp;
@@ -1196,11 +1432,32 @@
 
             const nameTo = savedSlots[toIndex] ? savedSlots[toIndex].chordName : 'Vazio';
             const nameFrom = savedSlots[fromIndex] ? savedSlots[fromIndex].chordName : 'Vazio';
-            showToast(`↔ Trocados: Slot ${fromIndex + 1} (${nameFrom}) e Slot ${toIndex + 1} (${nameTo})`);
+            showToast(`Trocados: Slot ${fromIndex + 1} e Slot ${toIndex + 1}`);
+        }
+
+        // Alternar trava do slot
+        function toggleLockSlot(index, event) {
+            if (event) event.stopPropagation();
+            const slot = savedSlots[index];
+            if (!slot) return;
+            slot.locked = !slot.locked;
+            persistSlots();
+            renderSlots();
+            if (slot.locked) {
+                showToast(`Slot ${index + 1} fixado.`);
+            } else {
+                showToast(`Slot ${index + 1} liberado.`);
+            }
         }
 
         // Drag & Drop Handlers Nativos (Mouse)
         function handleDragStart(e, index) {
+            const slot = savedSlots[index];
+            if (slot && slot.locked) {
+                e.preventDefault();
+                showToast(`Slot ${index + 1} fixado.`);
+                return;
+            }
             draggedSlotIndex = index;
             e.dataTransfer.effectAllowed = 'move';
             e.dataTransfer.setData('text/plain', index.toString());
@@ -1252,6 +1509,8 @@
 
         function handleTouchStart(e, index) {
             if (e.target.closest('button')) return;
+            const slot = savedSlots[index];
+            if (slot && slot.locked) return; // Não inicia drag se travado
             touchDraggedIndex = index;
             touchCardEl = document.getElementById(`slot-card-${index}`);
             if (touchCardEl) touchCardEl.classList.add('dragging');
@@ -1335,7 +1594,8 @@
                 inversionName: invMeta.name,
                 inversionShort: invMeta.short,
                 keys: chosenKeys,
-                notesText: chosenKeys.map(k => notes[((k % 12) + 12) % 12]).join(' • ')
+                notesText: chosenKeys.map(k => notes[((k % 12) + 12) % 12]).join(' • '),
+                locked: false
             };
 
             savedSlots[targetIndex] = newSlotData;
@@ -1346,29 +1606,109 @@
             showToast(`✓ ${chordSymbol} (${invMeta.short}) salvo no Slot ${targetIndex + 1}!`);
         }
 
-        // Limpar um slot individual
-        function removeSlot(index, event) {
-            if (event) event.stopPropagation();
-            savedSlots[index] = null;
-            persistSlots();
-            renderSlots();
-            updateTargetSlotSelect();
-            showToast(`Slot ${index + 1} limpo.`);
+        // =========================================================
+        // MODAL DE CONFIRMAÇÃO INTUITIVO E CLARO
+        // =========================================================
+        let currentModalAction = null;
+
+        function openConfirmModal(config) {
+            const modal = document.getElementById('confirm-modal');
+            const titleEl = document.getElementById('modal-title');
+            const descEl = document.getElementById('modal-desc');
+            const chordNameEl = document.getElementById('modal-chord-name');
+            const chordInvEl = document.getElementById('modal-chord-inv');
+            const confirmBtn = document.getElementById('modal-btn-confirm');
+            const cancelBtn = document.getElementById('modal-btn-cancel');
+
+            if (!modal) return;
+
+            titleEl.textContent = config.title || 'Deletar Acorde?';
+            descEl.textContent = config.message || 'Tem certeza que deseja deletar este item?';
+            chordNameEl.textContent = config.highlightTitle || '';
+            chordInvEl.textContent = config.highlightDetail || '';
+            confirmBtn.innerHTML = config.confirmText || '🗑️ Deletar';
+            cancelBtn.textContent = config.cancelText || 'Cancelar';
+
+            currentModalAction = config.onConfirm;
+
+            modal.classList.add('show');
+            modal.setAttribute('aria-hidden', 'false');
+
+            // Foco preventivo no botão seguro para evitar cliques ou Enter involuntários
+            setTimeout(() => {
+                cancelBtn.focus();
+            }, 60);
         }
 
-        // Limpar todos os 10 slots
+        function closeConfirmModal() {
+            const modal = document.getElementById('confirm-modal');
+            if (modal) {
+                modal.classList.remove('show');
+                modal.setAttribute('aria-hidden', 'true');
+            }
+            currentModalAction = null;
+        }
+
+        function handleModalConfirmClick() {
+            if (typeof currentModalAction === 'function') {
+                const action = currentModalAction;
+                closeConfirmModal();
+                action();
+            } else {
+                closeConfirmModal();
+            }
+        }
+
+        // Limpar um slot individual com confirmação clara
+        function removeSlot(index, event) {
+            if (event) event.stopPropagation();
+            const slot = savedSlots[index];
+            if (!slot) return;
+
+            if (slot.locked) {
+                showToast(`Slot ${index + 1} está fixado. Libere a trava antes de excluir.`);
+                return;
+            }
+
+            openConfirmModal({
+                title: `Deletar o Slot ${index + 1}?`,
+                message: `Você tem certeza de que deseja deletar este acorde da sequência?`,
+                highlightTitle: `Slot ${index + 1}: ${slot.chordName}`,
+                highlightDetail: slot.inversionName,
+                confirmText: '🗑️ Deletar',
+                cancelText: 'Cancelar',
+                onConfirm: () => {
+                    savedSlots[index] = null;
+                    persistSlots();
+                    renderSlots();
+                    updateTargetSlotSelect();
+                    showToast(`Slot ${index + 1} deletado.`);
+                }
+            });
+        }
+
+        // Limpar todos os 10 slots com confirmação detalhada
         function clearAllSlots() {
             if (savedSlots.every(s => s === null)) {
                 showToast('Nenhum acorde salvo para limpar.');
                 return;
             }
-            if (confirm('Deseja realmente limpar todos os 10 slots salvos da música?')) {
-                savedSlots = Array(10).fill(null);
-                persistSlots();
-                renderSlots();
-                updateTargetSlotSelect();
-                showToast('Todos os slots foram limpos.');
-            }
+
+            openConfirmModal({
+                title: 'Deletar todos os slots?',
+                message: 'Você tem certeza de que deseja deletar todos os acordes salvos da música? Esta ação não pode ser desfeita.',
+                highlightTitle: 'Todos os 10 Slots',
+                highlightDetail: 'Sequência Completa',
+                confirmText: '🗑️ Deletar Todos',
+                cancelText: 'Cancelar',
+                onConfirm: () => {
+                    savedSlots = Array(10).fill(null);
+                    persistSlots();
+                    renderSlots();
+                    updateTargetSlotSelect();
+                    showToast('Todos os slots foram limpos.');
+                }
+            });
         }
 
         // Selecionar um slot vazio como próximo destino
@@ -1427,28 +1767,44 @@
                         </div>
                     `;
                 } else {
-                    // Slot Ocupado (Draggable nativo)
-                    card.className = 'slot-card';
-                    card.draggable = true;
-                    card.ondragstart = (e) => handleDragStart(e, i);
-                    card.ondragend = handleDragEnd;
-                    card.ontouchstart = (e) => handleTouchStart(e, i);
-                    card.ontouchmove = handleTouchMove;
-                    card.ontouchend = handleTouchEnd;
+                    // Slot Ocupado
+                    const isLocked = !!slot.locked;
+                    card.className = `slot-card ${isLocked ? 'locked' : ''}`;
+                    card.draggable = !isLocked;
+
+                    if (!isLocked) {
+                        card.ondragstart = (e) => handleDragStart(e, i);
+                        card.ondragend = handleDragEnd;
+                        card.ontouchstart = (e) => handleTouchStart(e, i);
+                        card.ontouchmove = handleTouchMove;
+                        card.ontouchend = handleTouchEnd;
+                    } else {
+                        card.ondragstart = null;
+                        card.ondragend = null;
+                        card.ontouchstart = null;
+                        card.ontouchmove = null;
+                        card.ontouchend = null;
+                    }
 
                     card.innerHTML = `
                         <div class="slot-card-header">
                             <div class="slot-card-header-left">
-                                <span class="slot-drag-handle" title="Arraste para reposicionar">⠿</span>
+                                <span class="slot-drag-handle" title="${isLocked ? 'Slot fixado' : 'Arraste para reposicionar'}">⠿</span>
                                 <span class="slot-badge ${isCurrentTarget ? 'active-target' : ''}">
                                     Slot ${i + 1} ${isCurrentTarget ? '• Alvo' : ''}
                                 </span>
+                                <button type="button" class="btn-lock-slot ${isLocked ? 'locked' : ''}" onclick="toggleLockSlot(${i}, event)" title="${isLocked ? 'Slot fixado. Clique para liberar' : 'Fixar slot contra movimentação'}">
+                                    ${isLocked 
+                                        ? '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>'
+                                        : '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg>'
+                                    }
+                                </button>
                             </div>
                             <div class="slot-actions">
                                 <button type="button" class="btn-load-slot" onclick="loadSlotIntoControls(${i})" title="Carregar este acorde nos seletores">
                                     Visualizar
                                 </button>
-                                <button type="button" class="btn-remove-slot" onclick="removeSlot(${i}, event)" title="Excluir este slot">
+                                <button type="button" class="btn-remove-slot" onclick="removeSlot(${i}, event)" title="${isLocked ? 'Libere a trava antes de excluir' : 'Excluir este slot'}">
                                     ✕
                                 </button>
                             </div>
@@ -1490,6 +1846,27 @@
         document.getElementById('root').addEventListener('change', drawAllInversions);
         document.getElementById('type').addEventListener('change', drawAllInversions);
         document.getElementById('target-slot').addEventListener('change', renderSlots);
+
+        // Listeners do Modal de Confirmação
+        const modalConfirmBtn = document.getElementById('modal-btn-confirm');
+        if (modalConfirmBtn) {
+            modalConfirmBtn.addEventListener('click', handleModalConfirmClick);
+        }
+
+        const modalBackdrop = document.getElementById('confirm-modal');
+        if (modalBackdrop) {
+            modalBackdrop.addEventListener('click', (e) => {
+                if (e.target === modalBackdrop) {
+                    closeConfirmModal();
+                }
+            });
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modalBackdrop && modalBackdrop.classList.contains('show')) {
+                closeConfirmModal();
+            }
+        });
 
         // Inicializa a interface
         renderPiano('piano-root');
