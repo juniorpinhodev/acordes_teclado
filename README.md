@@ -2,7 +2,6 @@
  🎹 Dicionário de acordes e inversões no teclado com sequenciador de repertório
 
 
-
 Uma aplicação web moderna, responsiva e interativa desenvolvida em **HTML5, CSS3 e JavaScript Vanilla** (sem frameworks ou dependências externas) para consulta de digitações de acordes no teclado/piano, estudo de inversões e montagem de progressões harmônicas com até 10 slots de memória.
 
 ---
@@ -34,6 +33,21 @@ Uma aplicação web moderna, responsiva e interativa desenvolvida em **HTML5, CS
   - Dominante com 9ª ($9$)
   - Maior com 7ª e 9ª ($7M(9)$ / $maj9$)
   - Menor com 7ª e 9ª ($m9$)
+- **Sustenidos (#):**
+  - Sustenido ($#$)
+  - Sustenido Menor ($#m$)
+  - Com 5ª Aumentada ($\#5$)
+  - Com 7ª e 5ª Aumentada ($7(\#5)$)
+  - Com 7ª e 9ª Aumentada ($7(\#9)$)
+  - Com 7ª Maior e 11ª Aumentada ($7M(\#11)$)
+- **Bemóis (b):**
+  - Bemol ($b$)
+  - Bemol Menor ($bm$)
+  - Com 5ª Diminuta ($b5$)
+  - Com 7ª e 5ª Diminuta ($7(b5)$)
+  - Com 7ª e 9ª Menor ($7(b9)$)
+  - Meio-Diminuto ($m7(b5)$)
+  - Com 7ª e 13ª Menor ($7(b13)$)
 
 ---
 
