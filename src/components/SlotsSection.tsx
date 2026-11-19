@@ -15,6 +15,7 @@ interface SlotsSectionProps {
   onAddSlot: () => void;
   onClearAll: () => void;
   onLoadSlot: (index: number) => void;
+  onPlaySlot?: (keys: number[]) => void;
 }
 
 export function SlotsSection({
@@ -28,6 +29,7 @@ export function SlotsSection({
   onAddSlot,
   onClearAll,
   onLoadSlot,
+  onPlaySlot,
 }: SlotsSectionProps) {
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
@@ -303,6 +305,16 @@ export function SlotsSection({
                 </div>
 
                 <div className="flex items-center gap-1.5">
+                  {onPlaySlot && (
+                    <button
+                      type="button"
+                      onClick={() => onPlaySlot(slot.keys)}
+                      title="Ouvir este acorde"
+                      className="px-2 py-1 text-xs font-semibold bg-brand-600/15 hover:bg-brand-600/30 border border-brand-500/30 text-brand-300 hover:text-white rounded-md transition-all duration-150 cursor-pointer"
+                    >
+                      🔊
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() => onLoadSlot(i)}

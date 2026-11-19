@@ -1,12 +1,26 @@
 # 🎹 Dicionário de Acordes e Inversões no Teclado
 
-> Aplicação web interativa para consulta de digitações de acordes no teclado/piano, estudo de inversões harmônicas em tempo real e sequenciador de repertório ilimitado com Drag & Drop (mouse e touch).
+> Aplicação web interativa para consulta de digitações de acordes no teclado/piano, estudo de inversões harmônicas em tempo real, suporte nativo a controladores MIDI (teclados USB/Bluetooth), motor de áudio com múltiplos timbres (Piano Acústico, Rhodes, Sintetizadores) e sequenciador de repertório ilimitado com Drag & Drop (mouse e touch).
 
-Refatorado para a stack moderna: **Next.js 15 (App Router)**, **TypeScript** e **Tailwind CSS**.
+Desenvolvido na stack moderna: **Next.js 15 (App Router)**, **TypeScript**, **Tailwind CSS**, **Web MIDI API**, **smplr** e **Tone.js**.
 
 ---
 
 ## 🚀 Funcionalidades
+
+### 🎹 Conectividade MIDI & Motor de Áudio Multi-Timbre
+- **Web MIDI API Nativa:** Conecte qualquer teclado controlador MIDI USB ou Bluetooth diretamente ao navegador, sem necessidade de drivers ou softwares intermediários.
+- **Timbres Acústicos e Sintéticos de Alta Fidelidade:**
+  - 🎹 **Piano de Cauda (Grand Piano):** Amostras reais de um Steinway Grand Piano com múltiplos níveis de intensidade (*velocity*) via `smplr`.
+  - ⚡ **Piano Elétrico (Rhodes / EP):** Sonoridade encorpada vintage no estilo Fender Rhodes / Wurlitzer via `smplr`.
+  - 🎛️ **Synth Polifônico:** Sintetizador analógico polifônico com brilho e envelope dinâmico via `Tone.js`.
+  - 🌌 **Synth Pad Atmosférico:** Som ambiente aveludado com ataque gradual e sustentação espacial via `Tone.js`.
+- **Iluminação em Tempo Real no Teclado Virtual:** As teclas tocadas fisicamente no controlador MIDI acendem instantaneamente no teclado virtual na tela com brilho esmeralda.
+- **Detecção Inteligente de Acordes:** Ao pressionar notas no controlador MIDI, o sistema reconhece os intervalos e identifica o acorde tocado (ex.: *Acorde Tocado: C7M*), permitindo salvá-lo diretamente no próximo slot com um clique.
+- **Preview de Áudio nos Cards e Slots:** Botões de áudio (🔊 Ouvir) nas inversões e nos slots salvos para escutar qualquer acorde em arpejo ou bloco sonoro.
+- **Teclas Interativas:** Clique em qualquer tecla do piano virtual na tela para emitir o som correspondente.
+
+---
 
 ### 🎼 Dicionário Harmônico Completo
 - **Tríades:**
@@ -65,7 +79,7 @@ Refatorado para a stack moderna: **Next.js 15 (App Router)**, **TypeScript** e *
 
 ### 🎵 Slots Ilimitados (Sequenciador de Repertório)
 - **Sequenciador Expansível e Ilimitado:** Inicialmente, são exibidos 3 slots vazios prontos para uso. O usuário pode adicionar quantos slots desejar através do botão **"+"** posicionado ao lado do último slot na grade.
-- **Mini-Teclado Dedicado por Slot:** Cada slot salvo renderiza um teclado individual com as teclas daquela montagem acesas.
+- **Mini-Teclado Dedicado por Slot:** Cada slot salvo renderiza um teclado individual com as teclas daquela montagem acesas e botão de reprodução de áudio.
 - **Reordenação por Drag & Drop:** Troque a ordem de dois slots simplesmente arrastando e soltando (*swap*), com suporte tanto a mouse (desktop) quanto a toque nativo (*touch events* para smartphones e tablets).
 - **Trava de Segurança (Lock):** Bloqueie slots individualmente contra movimentação acidental ou exclusão involuntária.
 - **Recarregar para Edição:** Botão **Visualizar** que carrega qualquer acorde salvo de volta aos seletores principais e rola a tela suavemente até os controles.
@@ -88,6 +102,9 @@ Refatorado para a stack moderna: **Next.js 15 (App Router)**, **TypeScript** e *
 - **[React 19](https://react.dev/)**
 - **[TypeScript 5](https://www.typescriptlang.org/)** (Tipagem estrita e robusta)
 - **[Tailwind CSS](https://tailwindcss.com/)** (Estilização utilitária e responsiva)
+- **[Web MIDI API](https://developer.mozilla.org/en-US/docs/Web/API/Web_MIDI_API)** (Conexão nativa e zero-latency com teclados e controladores USB)
+- **[smplr](https://github.com/danigb/smplr)** (Samples acústicos reais de Piano Steinway e Pianos Elétricos)
+- **[Tone.js](https://tonejs.github.io/)** (Framework Web Audio profissional para síntese polifônica)
 - **[Lucide React](https://lucide.dev/)** (Ícones modernos e acessíveis)
 
 ---
@@ -98,26 +115,32 @@ Refatorado para a stack moderna: **Next.js 15 (App Router)**, **TypeScript** e *
 acordes_teclado/
 ├── src/
 │   ├── app/
-│   │   ├── globals.css         # Diretivas Tailwind, variáveis CSS e estilos do piano
-│   │   ├── layout.tsx          # Layout raiz com fontes e metadados SEO
-│   │   └── page.tsx            # Página principal com orquestração de estado
+│   │   ├── globals.css             # Diretivas Tailwind, variáveis CSS e estilos do piano
+│   │   ├── layout.tsx              # Layout raiz com fontes e metadados SEO
+│   │   └── page.tsx                # Página principal com orquestração de estado, áudio e MIDI
 │   ├── components/
-│   │   ├── Header.tsx          # Cabeçalho da aplicação
-│   │   ├── ControlsCard.tsx    # Painel de seletores (Nota, Tipo, Inversão, Destino)
-│   │   ├── Piano.tsx           # Componente do teclado de 2 oitavas (Normal e Mini)
-│   │   ├── ChordInversionCard.tsx # Card de visualização de inversão em tempo real
-│   │   ├── SlotsSection.tsx    # Sequenciador dos 10 slots com Drag & Drop
-│   │   ├── ConfirmModal.tsx    # Modal acessível de confirmação de exclusão
-│   │   ├── Toast.tsx           # Notificações flutuantes animadas
-│   │   └── Footer.tsx          # Rodapé com créditos do desenvolvedor
+│   │   ├── Header.tsx              # Cabeçalho da aplicação
+│   │   ├── AudioControls.tsx       # Status do controlador MIDI, seletor de timbres e volume
+│   │   ├── ControlsCard.tsx        # Painel de seletores (Nota, Tipo, Inversão, Destino)
+│   │   ├── Piano.tsx               # Componente do teclado de 2 oitavas (Normal e Mini) com feedback live
+│   │   ├── ChordInversionCard.tsx  # Card de inversão com botões de áudio e salvar
+│   │   ├── SlotsSection.tsx        # Sequenciador ilimitado com Drag & Drop e reprodução
+│   │   ├── ConfirmModal.tsx        # Modal acessível de confirmação de exclusão
+│   │   ├── Toast.tsx               # Notificações flutuantes animadas
+│   │   └── Footer.tsx              # Rodapé com créditos do desenvolvedor
 │   ├── constants/
-│   │   └── chords.ts           # Definições musicais, intervalos, categorias e opções
+│   │   ├── audio.ts                # Configurações e definições dos timbres disponíveis
+│   │   └── chords.ts               # Escalas cromáticas, intervalos, categorias e opções
 │   ├── hooks/
-│   │   └── useChordSlots.ts    # Hook customizado para slots, persistência e modais
+│   │   ├── useAudioEngine.ts       # Motor de áudio multi-timbre (smplr + Tone.js)
+│   │   ├── useWebMidi.ts           # Integração nativa com a Web MIDI API
+│   │   └── useChordSlots.ts        # Gerenciamento de slots, persistência e modais
 │   ├── types/
-│   │   └── music.ts            # Interfaces e tipagens TypeScript do domínio musical
+│   │   ├── audio.ts                # Tipos para timbres, áudio e estado MIDI
+│   │   └── music.ts                # Interfaces e tipagens do domínio musical
 │   └── utils/
-│       └── musicTheory.ts      # Funções de teoria musical (cálculo de inversões, etc.)
+│       ├── midiHelper.ts           # Mapeamento de notas MIDI e detector inteligente de acordes
+│       └── musicTheory.ts          # Cálculos de intervalos cromáticos e inversões
 ├── .gitignore
 ├── next.config.ts
 ├── package.json
@@ -153,11 +176,9 @@ acordes_teclado/
    npm run dev
    ```
 
-4. Abra [http://localhost:3000](http://localhost:3000) no seu navegador.
+4. Abra [http://localhost:3000](http://localhost:3000) no seu navegador, conecte seu teclado MIDI via USB e comece a tocar!
 
 ### Build de Produção
-
-Para gerar a versão otimizada de produção:
 
 ```bash
 npm run build

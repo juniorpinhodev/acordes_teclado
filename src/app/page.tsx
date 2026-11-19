@@ -3,12 +3,15 @@
 import React, { useState, useMemo, useCallback } from "react";
 import { Header } from "@/components/Header";
 import { ControlsCard } from "@/components/ControlsCard";
+import { AudioControls } from "@/components/AudioControls";
 import { ChordInversionCard } from "@/components/ChordInversionCard";
 import { SlotsSection } from "@/components/SlotsSection";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { Toast } from "@/components/Toast";
 import { Footer } from "@/components/Footer";
 import { useChordSlots } from "@/hooks/useChordSlots";
+import { useAudioEngine } from "@/hooks/useAudioEngine";
+import { useWebMidi } from "@/hooks/useWebMidi";
 import {
   getPitch,
   isFlatChord,
@@ -16,7 +19,9 @@ import {
   calculateInversions,
   getInversionDescriptions,
   formatNotesText,
+  fitTo2Octaves,
 } from "@/utils/musicTheory";
+import { detectChordFromPitches } from "@/utils/midiHelper";
 import { CHORD_INTERVALS } from "@/constants/chords";
 import { SavedChordSlot } from "@/types/music";
 
@@ -26,6 +31,7 @@ export default function HomePage() {
   const [inversionIndex, setInversionIndex] = useState<number>(0);
   const [targetSlot, setTargetSlot] = useState<number | "auto">("auto");
 
+  // Hook de Slots da Sequência
   const {
     slots,
     toastMessage,
@@ -40,7 +46,37 @@ export default function HomePage() {
     closeModal,
   } = useChordSlots();
 
-  // Cálculos musicais derivados
+  // Hook do Motor de Áudio (smplr + Tone.js)
+  const {
+    currentTimbre,
+    setTimbre,
+    volume,
+    setVolume,
+    isLoadingSamples,
+    playNote,
+    stopNote,
+    playChord,
+  } = useAudioEngine();
+
+  // Hook do Controlador MIDI via Web MIDI API
+  const {
+    isSupported: isMidiSupported,
+    connected: isMidiConnected,
+    deviceName: midiDeviceName,
+    activeNotes: activeMidiNotes,
+    activeKeyIndices: liveMidiKeyIndices,
+  } = useWebMidi({
+    onNoteOn: (note, vel) => playNote(note, vel),
+    onNoteOff: (note) => stopNote(note),
+  });
+
+  // Detecção em tempo real de acordes tocados no teclado MIDI físico
+  const detectedChord = useMemo(
+    () => detectChordFromPitches(activeMidiNotes),
+    [activeMidiNotes]
+  );
+
+  // Cálculos musicais derivados para os seletores
   const useFlat = useMemo(() => isFlatChord(rootNote, chordType), [rootNote, chordType]);
   const rootIndex = useMemo(() => getPitch(rootNote), [rootNote]);
   const intervals = useMemo(() => CHORD_INTERVALS[chordType] || [0, 4, 7], [chordType]);
@@ -113,6 +149,33 @@ export default function HomePage() {
     ]
   );
 
+  // Salvar acorde detectado diretamente do teclado MIDI
+  const handleSaveDetectedMidiChord = useCallback(() => {
+    if (!detectedChord) return;
+    const { root, type, chordSymbol: symbol } = detectedChord;
+    const isFlat = isFlatChord(root, type);
+    const chordIntervals = CHORD_INTERVALS[type] || [0, 4, 7];
+    const rootIdx = getPitch(root);
+    const calcInvs = calculateInversions(chordIntervals, rootIdx);
+    const descriptions = getInversionDescriptions(chordIntervals.length);
+
+    const newSlot: SavedChordSlot = {
+      root,
+      type,
+      chordName: symbol,
+      chordFullName: `${root} ${symbol}`,
+      inversionIdx: 0,
+      inversionName: descriptions[0]?.name || "Estado Fundamental",
+      inversionShort: descriptions[0]?.short || "Fund.",
+      keys: calcInvs[0],
+      notesText: formatNotesText(calcInvs[0], isFlat),
+      useFlat: isFlat,
+      locked: false,
+    };
+
+    saveSlot(newSlot, targetSlot);
+  }, [detectedChord, saveSlot, targetSlot]);
+
   // Carregar acorde de um slot salvo para os seletores
   const handleLoadSlot = useCallback(
     (index: number) => {
@@ -128,12 +191,39 @@ export default function HomePage() {
     [slots]
   );
 
+  // Tocar nota ao clicar em qualquer tecla do piano na tela
+  const handlePianoKeyClick = useCallback(
+    (pianoIndex: number) => {
+      const midiNote = 48 + pianoIndex; // C3 + índice
+      playNote(midiNote, 90);
+      setTimeout(() => {
+        stopNote(midiNote);
+      }, 700);
+    },
+    [playNote, stopNote]
+  );
+
   return (
     <>
       <Header />
 
       <main className="w-full max-w-[840px] flex flex-col items-center">
-        {/* Painel de Controles */}
+        {/* Painel de Áudio e Controlador MIDI */}
+        <AudioControls
+          isMidiSupported={isMidiSupported}
+          isMidiConnected={isMidiConnected}
+          midiDeviceName={midiDeviceName}
+          activeMidiNotesCount={activeMidiNotes.length}
+          detectedChordName={detectedChord?.chordSymbol || null}
+          onSaveDetectedChord={detectedChord ? handleSaveDetectedMidiChord : undefined}
+          currentTimbre={currentTimbre}
+          onSelectTimbre={setTimbre}
+          isLoadingSamples={isLoadingSamples}
+          volume={volume}
+          onVolumeChange={setVolume}
+        />
+
+        {/* Painel de Controles de Acordes */}
         <ControlsCard
           rootNote={rootNote}
           onRootChange={setRootNote}
@@ -156,8 +246,11 @@ export default function HomePage() {
               title={`${chordSymbol} - Estado Fundamental`}
               notesText={formatNotesText(inversions[0], useFlat)}
               keys={inversions[0]}
+              liveKeys={liveMidiKeyIndices}
               useFlat={useFlat}
               onSave={() => handleSaveChord(0)}
+              onPlayChord={() => playChord(inversions[0])}
+              onKeyClick={handlePianoKeyClick}
             />
           )}
 
@@ -167,8 +260,11 @@ export default function HomePage() {
               title={`${chordSymbol} - 1ª Inversão`}
               notesText={formatNotesText(inversions[1], useFlat)}
               keys={inversions[1]}
+              liveKeys={liveMidiKeyIndices}
               useFlat={useFlat}
               onSave={() => handleSaveChord(1)}
+              onPlayChord={() => playChord(inversions[1])}
+              onKeyClick={handlePianoKeyClick}
             />
           )}
 
@@ -178,8 +274,11 @@ export default function HomePage() {
               title={`${chordSymbol} - 2ª Inversão`}
               notesText={formatNotesText(inversions[2], useFlat)}
               keys={inversions[2]}
+              liveKeys={liveMidiKeyIndices}
               useFlat={useFlat}
               onSave={() => handleSaveChord(2)}
+              onPlayChord={() => playChord(inversions[2])}
+              onKeyClick={handlePianoKeyClick}
             />
           )}
 
@@ -189,13 +288,16 @@ export default function HomePage() {
               title={`${chordSymbol} - 3ª Inversão (Sétima no Baixo)`}
               notesText={formatNotesText(inversions[3], useFlat)}
               keys={inversions[3]}
+              liveKeys={liveMidiKeyIndices}
               useFlat={useFlat}
               onSave={() => handleSaveChord(3)}
+              onPlayChord={() => playChord(inversions[3])}
+              onKeyClick={handlePianoKeyClick}
             />
           )}
         </div>
 
-        {/* Seção de Slots da Música */}
+        {/* Seção de Slots da Música com Sequenciador */}
         <SlotsSection
           slots={slots}
           currentTargetIndex={currentTargetIndex}
@@ -207,6 +309,7 @@ export default function HomePage() {
           onAddSlot={addSlot}
           onClearAll={clearAllSlots}
           onLoadSlot={handleLoadSlot}
+          onPlaySlot={(keys) => playChord(keys)}
         />
       </main>
 

@@ -13,7 +13,9 @@
     "lucide-react": "^0.460.0",
     "next": "^15.1.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "smplr": "^1.2.0",
+    "tone": "^15.1.22"
   },
   "devDependencies": {
     "@types/node": "^22.10.1",
