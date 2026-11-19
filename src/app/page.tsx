@@ -46,13 +46,20 @@ export default function HomePage() {
     closeModal,
   } = useChordSlots();
 
-  // Hook do Motor de Áudio (smplr + Tone.js)
+  // Hook do Motor de Áudio (smplr)
   const {
     currentTimbre,
     setTimbre,
     volume,
     setVolume,
     isLoadingSamples,
+    loadingPercent,
+    isTimbreReady,
+    loadedTimbres,
+    isSustainOn,
+    setIsSustainOn,
+    toggleSustain,
+    loadCurrentTimbre,
     playNote,
     stopNote,
     playChord,
@@ -68,6 +75,7 @@ export default function HomePage() {
   } = useWebMidi({
     onNoteOn: (note, vel) => playNote(note, vel),
     onNoteOff: (note) => stopNote(note),
+    onSustainPedalChange: (isDown) => setIsSustainOn(isDown),
   });
 
   // Detecção em tempo real de acordes tocados no teclado MIDI físico
@@ -208,22 +216,7 @@ export default function HomePage() {
       <Header />
 
       <main className="w-full max-w-[840px] flex flex-col items-center">
-        {/* Painel de Áudio e Controlador MIDI */}
-        <AudioControls
-          isMidiSupported={isMidiSupported}
-          isMidiConnected={isMidiConnected}
-          midiDeviceName={midiDeviceName}
-          activeMidiNotesCount={activeMidiNotes.length}
-          detectedChordName={detectedChord?.chordSymbol || null}
-          onSaveDetectedChord={detectedChord ? handleSaveDetectedMidiChord : undefined}
-          currentTimbre={currentTimbre}
-          onSelectTimbre={setTimbre}
-          isLoadingSamples={isLoadingSamples}
-          volume={volume}
-          onVolumeChange={setVolume}
-        />
-
-        {/* Painel de Controles de Acordes */}
+        {/* Painel de Controles de Acordes (Configurações no topo) */}
         <ControlsCard
           rootNote={rootNote}
           onRootChange={setRootNote}
@@ -236,6 +229,26 @@ export default function HomePage() {
           onTargetSlotChange={setTargetSlot}
           slots={slots}
           onSave={() => handleSaveChord()}
+        />
+
+        {/* Painel de Áudio e Seleção de Timbres (Abaixo dos controles de acordes) */}
+        <AudioControls
+          isMidiSupported={isMidiSupported}
+          isMidiConnected={isMidiConnected}
+          midiDeviceName={midiDeviceName}
+          detectedChordName={detectedChord?.chordSymbol || null}
+          onSaveDetectedChord={detectedChord ? handleSaveDetectedMidiChord : undefined}
+          currentTimbre={currentTimbre}
+          onSelectTimbre={setTimbre}
+          isLoadingSamples={isLoadingSamples}
+          loadingPercent={loadingPercent}
+          isTimbreReady={isTimbreReady}
+          loadedTimbres={loadedTimbres}
+          onLoadCurrentTimbre={loadCurrentTimbre}
+          volume={volume}
+          onVolumeChange={setVolume}
+          isSustainOn={isSustainOn}
+          onToggleSustain={toggleSustain}
         />
 
         {/* Grade de Inversões em Tempo Real */}

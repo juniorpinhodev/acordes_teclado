@@ -10,11 +10,22 @@ Desenvolvido na stack moderna: **Next.js 15 (App Router)**, **TypeScript**, **Ta
 
 ### 🎹 Conectividade MIDI & Motor de Áudio Multi-Timbre
 - **Web MIDI API Nativa:** Conecte qualquer teclado controlador MIDI USB ou Bluetooth diretamente ao navegador, sem necessidade de drivers ou softwares intermediários.
-- **Timbres Acústicos e Sintéticos de Alta Fidelidade:**
-  - 🎹 **Piano de Cauda (Grand Piano):** Amostras reais de um Steinway Grand Piano com múltiplos níveis de intensidade (*velocity*) via `smplr`.
-  - ⚡ **Piano Elétrico (Rhodes / EP):** Sonoridade encorpada vintage no estilo Fender Rhodes / Wurlitzer via `smplr`.
-  - 🎛️ **Synth Polifônico:** Sintetizador analógico polifônico com brilho e envelope dinâmico via `Tone.js`.
-  - 🌌 **Synth Pad Atmosférico:** Som ambiente aveludado com ataque gradual e sustentação espacial via `Tone.js`.
+- **Lista de Seleção (Dropdown) com Monitor de Carregamento em Tempo Real:**
+  - Seletor em lista suspensa (`<select>`) elegante com status de cada timbre (`[Carregado]`).
+  - **Indicador de Progresso Real (%):** Monitora o download e decodificação das amostras de áudio com porcentagem numérica (0% a 100%) e barra de progresso visual animada.
+  - **Badge de Status:** Feedback claro entre `Carregando...`, `Carregado` (com indicador verde pulsante) e carregamento automático por padrão.
+- **Chave de Sustain (ON / OFF) & Suporte a Pedal Físico:**
+  - **Chave Minimalista na Interface:** Permite alternar entre *Sustain: ON* e *Sustain: OFF* com um clique na tela, sem animações piscantes.
+  - **Sustain OFF:** O som cessa de forma instantânea e limpa assim que a tecla ou acorde é liberado.
+  - **Sustain ON:** As notas se prolongam por mais tempo (+2,5 segundos) após você soltar as teclas, permitindo transições harmônicas suaves e sem buracos sonoros entre as trocas de acordes.
+  - **Integração com Pedal Físico (CC 64):** Se você conectar um pedal de sustain ao controlador MIDI, pisar no pedal ativa a chave automaticamente na tela em tempo real.
+- **Timbres Especializados em Gospel Worship, R&B e Blues (Motor de Áudio smplr):**
+  - **Piano de Cauda (Grand Piano):** Amostras acústicas de alta fidelidade de um Steinway Grand Piano com dinâmica multi-velocity expressiva via `SplendidGrandPiano` do `smplr`.
+  - **FM E. Piano (Yamaha DX7):** Clássico piano elétrico FM cristalino estilo DX7 via Soundfont `electric_piano_2` do `smplr`.
+  - **Worship Ambient Pad:** Halo Pad aveludado e quente para cama sonora de adoração via Soundfont `pad_7_halo` do `smplr`.
+  - **Soft Silk Strings:** Cordas orquestrais lentas (*slow strings*) macias e sedosas via Soundfont `string_ensemble_2` do `smplr`.
+  - **Neo-Soul Rhodes:** Fender Rhodes Mark I clássico encorpado para R&B e Soul via Soundfont `electric_piano_1` do `smplr`.
+  - **Órgão Hammond B3:** Órgão Drawbar com simulação de rotor Leslie via Soundfont `drawbar_organ` do `smplr`.
 - **Iluminação em Tempo Real no Teclado Virtual:** As teclas tocadas fisicamente no controlador MIDI acendem instantaneamente no teclado virtual na tela com brilho esmeralda.
 - **Detecção Inteligente de Acordes:** Ao pressionar notas no controlador MIDI, o sistema reconhece os intervalos e identifica o acorde tocado (ex.: *Acorde Tocado: C7M*), permitindo salvá-lo diretamente no próximo slot com um clique.
 - **Preview de Áudio nos Cards e Slots:** Botões de áudio (🔊 Ouvir) nas inversões e nos slots salvos para escutar qualquer acorde em arpejo ou bloco sonoro.

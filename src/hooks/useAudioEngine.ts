@@ -2,114 +2,228 @@
 
 import { useRef, useState, useCallback, useEffect } from "react";
 import { TimbreType } from "@/types/audio";
-import { midiToNoteName } from "@/utils/midiHelper";
+
+interface PlayableInstrument {
+  start: (note: number, velocity: number) => (() => void) | void;
+  stop: (note: number) => void;
+}
 
 export function useAudioEngine() {
-  const [currentTimbre, setCurrentTimbre] = useState<TimbreType>("acoustic_piano");
+  const [currentTimbre, setCurrentTimbre] = useState<TimbreType>("grand_piano");
   const [isAudioInitialized, setIsAudioInitialized] = useState(false);
-  const [isLoadingSamples, setIsLoadingSamples] = useState(false);
+  // Inicia como true pois o grand_piano é carregado automaticamente por default ao abrir a página
+  const [isLoadingSamples, setIsLoadingSamples] = useState(true);
+  const [loadingPercent, setLoadingPercent] = useState<number>(10);
+  const [loadedTimbres, setLoadedTimbres] = useState<Record<string, boolean>>({});
   const [volume, setVolume] = useState<number>(0.85);
 
   const audioContextRef = useRef<AudioContext | null>(null);
   const masterGainRef = useRef<GainNode | null>(null);
 
-  // Instâncias dos instrumentos
-  const acousticPianoRef = useRef<any>(null);
-  const electricPianoRef = useRef<any>(null);
-  const synthPolyRef = useRef<any>(null);
-  const synthPadRef = useRef<any>(null);
-  const toneInitializedRef = useRef<boolean>(false);
+  // Cache de instrumentos smplr indexado por chave de timbre
+  const instrumentsRef = useRef<Record<string, PlayableInstrument>>({});
+  const loadingLockRef = useRef<Record<string, boolean>>({});
 
-  // Garante que o AudioContext esteja ativo
-  const ensureAudioContext = useCallback(async () => {
+  // Registro de vozes ativas para interrupção imediata ao soltar a tecla
+  const activeVoicesRef = useRef<Map<number, () => void>>(new Map());
+
+  // Chave de Sustain (Ativado / Desativado)
+  const [isSustainOn, setIsSustainOn] = useState(false);
+  const sustainTimeoutsRef = useRef<Map<number, NodeJS.Timeout>>(new Map());
+
+  // Obtém ou cria o AudioContext de forma síncrona sem bloquear no resume
+  const getAudioContext = useCallback(() => {
     if (typeof window === "undefined") return null;
 
     if (!audioContextRef.current) {
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
       if (AudioCtx) {
-        audioContextRef.current = new AudioCtx();
-        const masterGain = audioContextRef.current.createGain();
-        masterGain.gain.setValueAtTime(volume, audioContextRef.current.currentTime);
-        masterGain.connect(audioContextRef.current.destination);
+        const ctx = new AudioCtx();
+        const masterGain = ctx.createGain();
+        masterGain.gain.setValueAtTime(volume, ctx.currentTime);
+        masterGain.connect(ctx.destination);
         masterGainRef.current = masterGain;
+        audioContextRef.current = ctx;
       }
     }
-
-    if (audioContextRef.current && audioContextRef.current.state === "suspended") {
-      await audioContextRef.current.resume();
-    }
-
-    setIsAudioInitialized(true);
     return audioContextRef.current;
   }, [volume]);
 
-  // Carrega e inicializa o instrumento selecionado
+  // Ativa o contexto sonoro quando há interação do usuário (respeitando autoplay policy)
+  const resumeAudioContext = useCallback(async () => {
+    const ctx = getAudioContext();
+    if (ctx && ctx.state === "suspended") {
+      try {
+        await ctx.resume();
+      } catch {
+        // Silencioso se o navegador ainda exigir interação explícita
+      }
+    }
+    setIsAudioInitialized(true);
+    return ctx;
+  }, [getAudioContext]);
+
+  // Desbloqueia o áudio no primeiro clique, toque ou tecla pressionada
+  useEffect(() => {
+    const unlockAudio = () => {
+      if (audioContextRef.current && audioContextRef.current.state === "suspended") {
+        audioContextRef.current.resume().catch(() => {});
+      }
+      setIsAudioInitialized(true);
+    };
+
+    window.addEventListener("click", unlockAudio, { once: true });
+    window.addEventListener("keydown", unlockAudio, { once: true });
+    window.addEventListener("touchstart", unlockAudio, { once: true });
+
+    return () => {
+      window.removeEventListener("click", unlockAudio);
+      window.removeEventListener("keydown", unlockAudio);
+      window.removeEventListener("touchstart", unlockAudio);
+    };
+  }, []);
+
+  // Carrega e inicializa o instrumento selecionado via smplr com medidor de progresso
   const loadInstrument = useCallback(
     async (timbre: TimbreType) => {
-      const ctx = await ensureAudioContext();
-      if (!ctx) return;
+      // Se já está carregado e em cache, marca como pronto imediatamente
+      if (instrumentsRef.current[timbre]) {
+        setLoadedTimbres((prev) => ({ ...prev, [timbre]: true }));
+        setLoadingPercent(100);
+        setIsLoadingSamples(false);
+        return instrumentsRef.current[timbre];
+      }
+
+      // Evita disparos duplicados concorrentes para o mesmo timbre
+      if (loadingLockRef.current[timbre]) return;
+      loadingLockRef.current[timbre] = true;
+
+      const ctx = getAudioContext();
+      if (!ctx) {
+        loadingLockRef.current[timbre] = false;
+        return;
+      }
 
       setIsLoadingSamples(true);
+      setLoadingPercent(10);
+
+      const handleProgress = ({ loaded, total }: { loaded: number; total: number }) => {
+        const pct = total > 0 ? Math.round((loaded / total) * 100) : 15;
+        setLoadingPercent(Math.max(10, Math.min(100, pct)));
+      };
+
       try {
-        if (timbre === "acoustic_piano" && !acousticPianoRef.current) {
+        const dest = masterGainRef.current || ctx.destination;
+
+        if (timbre === "grand_piano") {
+          // 1. Piano de Cauda Steinway Acústico Real (SplendidGrandPiano smplr)
           const { SplendidGrandPiano } = await import("smplr");
           const piano = new SplendidGrandPiano(ctx, {
-            destination: masterGainRef.current || ctx.destination,
+            destination: dest,
+            onLoadProgress: handleProgress,
           });
           await piano.ready;
-          acousticPianoRef.current = piano;
-        } else if (timbre === "electric_piano" && !electricPianoRef.current) {
-          const { ElectricPiano } = await import("smplr");
-          const ep = new ElectricPiano(ctx, {
-            instrument: "WurlitzerEP200",
-            destination: masterGainRef.current || ctx.destination,
+          instrumentsRef.current["grand_piano"] = {
+            start: (note, velocity) => piano.start({ note, velocity }),
+            stop: (note) => piano.stop(note),
+          };
+        } else if (timbre === "fm_piano") {
+          // 2. FM E. Piano Yamaha DX7 clássico (Soundfont electric_piano_2 smplr)
+          const { Soundfont } = await import("smplr");
+          const fm = new Soundfont(ctx, {
+            instrument: "electric_piano_2",
+            destination: dest,
+            onLoadProgress: handleProgress,
           });
-          await ep.ready;
-          electricPianoRef.current = ep;
-        } else if ((timbre === "synth_poly" || timbre === "synth_pad") && !toneInitializedRef.current) {
-          const Tone = await import("tone");
-          await Tone.start();
-
-          // Sintetizador Polifônico com brilho e envelope rápido
-          const poly = new Tone.PolySynth(Tone.Synth, {
-            oscillator: { type: "sawtooth" },
-            envelope: {
-              attack: 0.02,
-              decay: 0.2,
-              sustain: 0.5,
-              release: 0.8,
-            },
-          }).toDestination();
-          poly.volume.value = -6;
-          synthPolyRef.current = poly;
-
-          // Synth Pad atmosférico com ataque suave e cauda espacial
-          const pad = new Tone.PolySynth(Tone.Synth, {
-            oscillator: { type: "triangle" },
-            envelope: {
-              attack: 0.35,
-              decay: 0.5,
-              sustain: 0.85,
-              release: 1.8,
-            },
-          }).toDestination();
-          pad.volume.value = -8;
-          synthPadRef.current = pad;
-
-          toneInitializedRef.current = true;
+          await fm.ready;
+          instrumentsRef.current["fm_piano"] = {
+            start: (note, velocity) => fm.start({ note, velocity }),
+            stop: (note) => fm.stop(note),
+          };
+        } else if (timbre === "worship_pad") {
+          // 3. Worship Ambient Pad: Halo Pad original que você gostou (Soundfont pad_7_halo smplr)
+          const { Soundfont } = await import("smplr");
+          const pad = new Soundfont(ctx, {
+            instrument: "pad_7_halo",
+            destination: dest,
+            onLoadProgress: handleProgress,
+          });
+          await pad.ready;
+          instrumentsRef.current["worship_pad"] = {
+            start: (note, velocity) => pad.start({ note, velocity }),
+            stop: (note) => pad.stop(note),
+          };
+        } else if (timbre === "soft_strings") {
+          // 4. Soft Silk Strings: cordas orquestrais lentas (Soundfont string_ensemble_2 smplr)
+          const { Soundfont } = await import("smplr");
+          const strings = new Soundfont(ctx, {
+            instrument: "string_ensemble_2",
+            destination: dest,
+            onLoadProgress: handleProgress,
+          });
+          await strings.ready;
+          instrumentsRef.current["soft_strings"] = {
+            start: (note, velocity) => strings.start({ note, velocity }),
+            stop: (note) => strings.stop(note),
+          };
+        } else if (timbre === "rhodes") {
+          // 5. Fender Rhodes Mark I Neo-Soul (Soundfont electric_piano_1 smplr)
+          const { Soundfont } = await import("smplr");
+          const rhodes = new Soundfont(ctx, {
+            instrument: "electric_piano_1",
+            destination: dest,
+            onLoadProgress: handleProgress,
+          });
+          await rhodes.ready;
+          instrumentsRef.current["rhodes"] = {
+            start: (note, velocity) => rhodes.start({ note, velocity }),
+            stop: (note) => rhodes.stop(note),
+          };
+        } else if (timbre === "gospel_organ") {
+          // 6. Órgão Hammond B3 Drawbar com Leslie (Soundfont drawbar_organ smplr)
+          const { Soundfont } = await import("smplr");
+          const organ = new Soundfont(ctx, {
+            instrument: "drawbar_organ",
+            destination: dest,
+            onLoadProgress: handleProgress,
+          });
+          await organ.ready;
+          instrumentsRef.current["gospel_organ"] = {
+            start: (note, velocity) => organ.start({ note, velocity }),
+            stop: (note) => organ.stop(note),
+          };
         }
+
+        setLoadingPercent(100);
+        setLoadedTimbres((prev) => ({ ...prev, [timbre]: true }));
       } catch (err) {
         console.error("Erro ao carregar timbre:", timbre, err);
       } finally {
+        loadingLockRef.current[timbre] = false;
         setIsLoadingSamples(false);
       }
     },
-    [ensureAudioContext]
+    [getAudioContext]
   );
 
-  // Muda o timbre e pré-carrega
+  // Carrega automaticamente o timbre por default (Grand Piano) assim que a página é aberta
+  useEffect(() => {
+    loadInstrument("grand_piano");
+  }, [loadInstrument]);
+
+  // Muda o timbre e carrega automaticamente sob demanda
   const setTimbre = useCallback(
     async (timbre: TimbreType) => {
+      // Limpa agendamentos de sustain e interrompe qualquer som ativo antes de trocar o timbre
+      sustainTimeoutsRef.current.forEach((t) => clearTimeout(t));
+      sustainTimeoutsRef.current.clear();
+      activeVoicesRef.current.forEach((stopFn) => {
+        try {
+          stopFn();
+        } catch {}
+      });
+      activeVoicesRef.current.clear();
+
       setCurrentTimbre(timbre);
       await loadInstrument(timbre);
     },
@@ -123,72 +237,115 @@ export function useAudioEngine() {
     }
   }, [volume]);
 
+  // Alterna a chave de Sustain (Ativado / Desativado)
+  const toggleSustain = useCallback(() => {
+    setIsSustainOn((prev) => {
+      const next = !prev;
+      if (!next) {
+        // Ao desativar o sustain, encerra imediatamente qualquer nota que estava prolongando
+        sustainTimeoutsRef.current.forEach((t) => clearTimeout(t));
+        sustainTimeoutsRef.current.clear();
+        activeVoicesRef.current.forEach((stopFn) => {
+          try {
+            stopFn();
+          } catch {}
+        });
+        activeVoicesRef.current.clear();
+      }
+      return next;
+    });
+  }, []);
+
   // Tocar uma nota (Note On)
   const playNote = useCallback(
     async (midiNumber: number, velocity: number = 90) => {
-      await ensureAudioContext();
+      await resumeAudioContext();
+      const safeVelocity = Math.min(127, Math.max(1, velocity));
 
-      // Garante que o timbre atual está carregado
-      if (currentTimbre === "acoustic_piano") {
-        if (!acousticPianoRef.current) await loadInstrument("acoustic_piano");
-        if (acousticPianoRef.current) {
-          acousticPianoRef.current.start({
-            note: midiNumber,
-            velocity: Math.min(127, Math.max(1, velocity)),
-          });
+      // Se havia um desligamento de sustain agendado para esta nota, cancela
+      const pendingTimeout = sustainTimeoutsRef.current.get(midiNumber);
+      if (pendingTimeout) {
+        clearTimeout(pendingTimeout);
+        sustainTimeoutsRef.current.delete(midiNumber);
+      }
+
+      let inst = instrumentsRef.current[currentTimbre];
+      if (!inst) {
+        await loadInstrument(currentTimbre);
+        inst = instrumentsRef.current[currentTimbre];
+      }
+
+      if (inst && typeof inst.start === "function") {
+        // Encerra qualquer reprodução anterior pendente da mesma nota
+        const prevStop = activeVoicesRef.current.get(midiNumber);
+        if (typeof prevStop === "function") {
+          try {
+            prevStop();
+          } catch {}
         }
-      } else if (currentTimbre === "electric_piano") {
-        if (!electricPianoRef.current) await loadInstrument("electric_piano");
-        if (electricPianoRef.current) {
-          electricPianoRef.current.start({
-            note: midiNumber,
-            velocity: Math.min(127, Math.max(1, velocity)),
-          });
-        }
-      } else if (currentTimbre === "synth_poly") {
-        if (!synthPolyRef.current) await loadInstrument("synth_poly");
-        if (synthPolyRef.current) {
-          const noteName = midiToNoteName(midiNumber);
-          synthPolyRef.current.triggerAttack(noteName, undefined, velocity / 127);
-        }
-      } else if (currentTimbre === "synth_pad") {
-        if (!synthPadRef.current) await loadInstrument("synth_pad");
-        if (synthPadRef.current) {
-          const noteName = midiToNoteName(midiNumber);
-          synthPadRef.current.triggerAttack(noteName, undefined, velocity / 127);
+
+        const voiceStopFn = inst.start(midiNumber, safeVelocity);
+        if (typeof voiceStopFn === "function") {
+          activeVoicesRef.current.set(midiNumber, voiceStopFn);
         }
       }
     },
-    [currentTimbre, ensureAudioContext, loadInstrument]
+    [currentTimbre, resumeAudioContext, loadInstrument]
   );
 
-  // Parar uma nota (Note Off)
-  const stopNote = useCallback(
+  // Interrompe fisicamente a voz da nota
+  const executeStop = useCallback(
     (midiNumber: number) => {
-      if (currentTimbre === "acoustic_piano" && acousticPianoRef.current) {
-        acousticPianoRef.current.stop({ note: midiNumber });
-      } else if (currentTimbre === "electric_piano" && electricPianoRef.current) {
-        electricPianoRef.current.stop({ note: midiNumber });
-      } else if (currentTimbre === "synth_poly" && synthPolyRef.current) {
-        const noteName = midiToNoteName(midiNumber);
-        synthPolyRef.current.triggerRelease(noteName);
-      } else if (currentTimbre === "synth_pad" && synthPadRef.current) {
-        const noteName = midiToNoteName(midiNumber);
-        synthPadRef.current.triggerRelease(noteName);
+      // 1. Executa a função direta de parada da voz retornada pelo start()
+      const voiceStopFn = activeVoicesRef.current.get(midiNumber);
+      if (typeof voiceStopFn === "function") {
+        try {
+          voiceStopFn();
+        } catch {}
+        activeVoicesRef.current.delete(midiNumber);
+      }
+
+      // 2. Garante parada também por stopId no instrumento
+      const inst = instrumentsRef.current[currentTimbre];
+      if (inst && typeof inst.stop === "function") {
+        try {
+          inst.stop(midiNumber);
+        } catch {}
       }
     },
     [currentTimbre]
   );
 
-  // Tocar um acorde completo (preview com arpejo elegante ou bloco)
+  // Parar uma nota (Note Off) - Respeita a chave de Sustain
+  const stopNote = useCallback(
+    (midiNumber: number) => {
+      if (isSustainOn) {
+        // Com o Sustain ativado, a nota se prolonga por 2.5s antes de cortar, permitindo transição de acordes
+        const existing = sustainTimeoutsRef.current.get(midiNumber);
+        if (existing) clearTimeout(existing);
+
+        const timeout = setTimeout(() => {
+          executeStop(midiNumber);
+          sustainTimeoutsRef.current.delete(midiNumber);
+        }, 2500);
+
+        sustainTimeoutsRef.current.set(midiNumber, timeout);
+      } else {
+        // Com o Sustain desativado, o som corta imediatamente ao soltar a tecla
+        executeStop(midiNumber);
+      }
+    },
+    [isSustainOn, executeStop]
+  );
+
+  // Tocar um acorde completo (preview de 1.8s a 2s para arpejo ou bloco)
   const playChord = useCallback(
     async (
       pianoKeyIndices: number[],
       mode: "arpeggio" | "block" = "arpeggio",
       baseOctaveMidi: number = 48
     ) => {
-      await ensureAudioContext();
-      // Converte índices de teclas do teclado visual (0..23) em números MIDI reais (ex: 48..71)
+      await resumeAudioContext();
       const midiNotes = pianoKeyIndices.map((idx) => baseOctaveMidi + idx);
 
       if (mode === "arpeggio") {
@@ -197,29 +354,43 @@ export function useAudioEngine() {
             playNote(midiNote, 95);
             setTimeout(() => {
               stopNote(midiNote);
-            }, 1200);
-          }, i * 90);
+            }, 1800);
+          }, i * 95);
         });
       } else {
         midiNotes.forEach((midiNote) => {
           playNote(midiNote, 90);
           setTimeout(() => {
             stopNote(midiNote);
-          }, 1400);
+          }, 2000);
         });
       }
     },
-    [ensureAudioContext, playNote, stopNote]
+    [resumeAudioContext, playNote, stopNote]
   );
+
+  // Carrega manualmente o timbre selecionado se necessário
+  const loadCurrentTimbre = useCallback(async () => {
+    await loadInstrument(currentTimbre);
+  }, [currentTimbre, loadInstrument]);
+
+  const isTimbreReady = !!loadedTimbres[currentTimbre] || !!instrumentsRef.current[currentTimbre];
 
   return {
     currentTimbre,
     isAudioInitialized,
     isLoadingSamples,
+    loadingPercent,
+    isTimbreReady,
+    loadedTimbres,
     volume,
     setVolume,
     setTimbre,
-    ensureAudioContext,
+    isSustainOn,
+    setIsSustainOn,
+    toggleSustain,
+    loadCurrentTimbre,
+    ensureAudioContext: resumeAudioContext,
     playNote,
     stopNote,
     playChord,

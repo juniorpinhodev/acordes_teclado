@@ -1,8 +1,10 @@
 export type TimbreType =
-  | "acoustic_piano"
-  | "electric_piano"
-  | "synth_poly"
-  | "synth_pad";
+  | "grand_piano"
+  | "fm_piano"
+  | "worship_pad"
+  | "soft_strings"
+  | "rhodes"
+  | "gospel_organ";
 
 export interface TimbreOption {
   id: TimbreType;
@@ -16,6 +18,6 @@ export interface MidiDeviceState {
   isSupported: boolean;
   connected: boolean;
   deviceName: string | null;
-  activeNotes: number[]; // notas MIDI brutas ativas (ex: 60, 64, 67)
-  activeKeyIndices: number[]; // mapeadas para as teclas do nosso piano (0..23)
+  activeNotes: number[];
+  activeKeyIndices: number[];
 }

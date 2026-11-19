@@ -34,7 +34,7 @@ export function ControlsCard({
   const nextFreeIndex = slots.findIndex((s) => s === null);
 
   return (
-    <div className="w-full max-w-[840px] bg-dark-800 border border-dark-700 rounded-[14px] p-4 sm:p-5 md:p-6 mb-6 sm:mb-8 md:mb-10 shadow-[0_10px_25px_rgba(0,0,0,0.3)]">
+    <div className="w-full max-w-[840px] bg-dark-800 border border-dark-700 rounded-[14px] p-4 sm:p-5 md:p-6 mb-6 sm:mb-8 shadow-[0_10px_25px_rgba(0,0,0,0.3)]">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
         {/* Nota Fundamental */}
         <div className="flex flex-col gap-1.5">
@@ -139,7 +139,21 @@ export function ControlsCard({
             onClick={onSave}
             className="w-full min-h-[48px] px-4 py-3 rounded-lg font-bold text-base text-white bg-brand-600 hover:bg-brand-500 active:scale-[0.99] shadow-[0_4px_14px_rgba(130,87,229,0.4)] flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer"
           >
-            <span>💾</span>
+            <svg
+              className="w-4 h-4 text-white"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"
+              />
+              <polyline points="17 21 17 13 7 13 7 21" />
+              <polyline points="7 3 7 8 15 8" />
+            </svg>
             <span>Salvar Acorde</span>
           </button>
         </div>

@@ -84,7 +84,7 @@ export function Piano({
                 onKeyClick ? "cursor-pointer" : ""
               } ${
                 isLive
-                  ? "active bg-gradient-to-b from-emerald-400 to-emerald-600 !text-white !border-emerald-300 shadow-[0_0_14px_rgba(16,185,129,0.85)]"
+                  ? "active bg-gradient-to-b from-brand-300 to-brand-500 !text-white !border-brand-200 shadow-[0_0_14px_rgba(153,109,255,0.85)]"
                   : isActive
                   ? "active bg-gradient-to-b from-[#996dff] to-[#8257e5] text-white border-[#6a39d8] shadow-[0_4px_10px_rgba(130,87,229,0.6)]"
                   : "bg-gradient-to-b from-[#27272a] to-[#121214] text-transparent"
@@ -104,7 +104,7 @@ export function Piano({
               onKeyClick ? "cursor-pointer" : ""
             } ${
               isLive
-                ? "active bg-gradient-to-b from-emerald-300 to-emerald-500 !text-white !border-emerald-400 shadow-[0_0_16px_rgba(16,185,129,0.8),inset_0_-2px_6px_rgba(0,0,0,0.2)]"
+                ? "active bg-gradient-to-b from-brand-200 to-brand-400 !text-white !border-brand-300 shadow-[0_0_16px_rgba(153,109,255,0.8),inset_0_-2px_6px_rgba(0,0,0,0.2)]"
                 : isActive
                 ? "active bg-gradient-to-b from-[#996dff] to-[#8257e5] text-white border-[#6a39d8] shadow-[0_4px_12px_rgba(130,87,229,0.5),inset_0_-2px_6px_rgba(0,0,0,0.2)]"
                 : "bg-gradient-to-b from-[#fafafa] to-[#ffffff] text-[#71717a]"

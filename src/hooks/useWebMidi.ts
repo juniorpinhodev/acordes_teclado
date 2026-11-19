@@ -6,38 +6,62 @@ import { midiToPianoIndex } from "@/utils/midiHelper";
 interface UseWebMidiOptions {
   onNoteOn?: (midiNumber: number, velocity: number) => void;
   onNoteOff?: (midiNumber: number) => void;
+  onSustainPedalChange?: (isDown: boolean) => void;
 }
 
-export function useWebMidi({ onNoteOn, onNoteOff }: UseWebMidiOptions = {}) {
+export function useWebMidi({ onNoteOn, onNoteOff, onSustainPedalChange }: UseWebMidiOptions = {}) {
   const [isSupported, setIsSupported] = useState(false);
   const [deviceName, setDeviceName] = useState<string | null>(null);
   const [activeNotes, setActiveNotes] = useState<number[]>([]);
 
-  // Refs para manter callbacks sempre atualizados sem recriar listeners
+  // Refs para manter callbacks sempre sincronizados sem recriar listeners
   const onNoteOnRef = useRef(onNoteOn);
   const onNoteOffRef = useRef(onNoteOff);
+  const onSustainPedalChangeRef = useRef(onSustainPedalChange);
+  const physicallyPressedNotesRef = useRef<Set<number>>(new Set());
+
   useEffect(() => {
     onNoteOnRef.current = onNoteOn;
     onNoteOffRef.current = onNoteOff;
-  }, [onNoteOn, onNoteOff]);
+    onSustainPedalChangeRef.current = onSustainPedalChange;
+  }, [onNoteOn, onNoteOff, onSustainPedalChange]);
 
   const handleMidiMessage = useCallback((event: any) => {
     if (!event.data || event.data.length < 2) return;
     const [status, noteNumber, velocity = 0] = event.data;
-    const command = status >> 4; // 9 = Note On, 8 = Note Off
+    const command = status >> 4; // 9 = Note On, 8 = Note Off, 11 (0xB) = Control Change
 
+    // 1. Note On (tecla pressionada com velocidade > 0)
     if (command === 9 && velocity > 0) {
-      // Note On
-      setActiveNotes((prev) => (prev.includes(noteNumber) ? prev : [...prev, noteNumber]));
+      physicallyPressedNotesRef.current.add(noteNumber);
+      setActiveNotes(Array.from(physicallyPressedNotesRef.current));
+
       if (onNoteOnRef.current) {
         onNoteOnRef.current(noteNumber, velocity);
       }
-    } else if (command === 8 || (command === 9 && velocity === 0)) {
-      // Note Off
-      setActiveNotes((prev) => prev.filter((n) => n !== noteNumber));
+    }
+    // 2. Note Off (comando 8 ou comando 9 com velocidade 0 = tecla solta)
+    else if (command === 8 || (command === 9 && velocity === 0)) {
+      physicallyPressedNotesRef.current.delete(noteNumber);
+      setActiveNotes(Array.from(physicallyPressedNotesRef.current));
+
       if (onNoteOffRef.current) {
         onNoteOffRef.current(noteNumber);
       }
+    }
+    // 3. Control Change (CC 64 = Pedal de Sustain físico)
+    else if (command === 11 && noteNumber === 64) {
+      if (onSustainPedalChangeRef.current) {
+        onSustainPedalChangeRef.current(velocity >= 64);
+      }
+    }
+    // 4. All Notes Off / All Sound Off (CC 120 / CC 123)
+    else if (command === 11 && (noteNumber === 120 || noteNumber === 123)) {
+      physicallyPressedNotesRef.current.forEach((n) => {
+        onNoteOffRef.current?.(n);
+      });
+      physicallyPressedNotesRef.current.clear();
+      setActiveNotes([]);
     }
   }, []);
 
@@ -62,6 +86,10 @@ export function useWebMidi({ onNoteOn, onNoteOff }: UseWebMidiOptions = {}) {
             setDeviceName(firstConnected.name || "Controlador MIDI");
           } else {
             setDeviceName(null);
+            physicallyPressedNotesRef.current.forEach((n) => {
+              onNoteOffRef.current?.(n);
+            });
+            physicallyPressedNotesRef.current.clear();
             setActiveNotes([]);
           }
 
