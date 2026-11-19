@@ -1,0 +1,89 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --white-key-w: clamp(21px, calc((100vw - 64px) / 14), 46px);
+  --white-key-h: calc(var(--white-key-w) * 3.75);
+  --black-key-w: calc(var(--white-key-w) * 0.65);
+  --black-key-h: calc(var(--white-key-h) * 0.62);
+  --key-radius: clamp(3px, 0.8vw, 6px);
+  --font-note-white: clamp(0.55rem, 1.2vw, 0.85rem);
+  --font-note-black: clamp(0.48rem, 1vw, 0.72rem);
+}
+
+body {
+  background-color: #121214;
+  color: #e1e1e6;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  overflow-x: hidden;
+}
+
+/* Dimensões das teclas em modo normal */
+.piano-normal .key.white {
+  width: var(--white-key-w);
+  height: var(--white-key-h);
+  padding-bottom: clamp(6px, 1.2vw, 14px);
+  font-size: var(--font-note-white);
+}
+
+.piano-normal .key.black {
+  width: var(--black-key-w);
+  height: var(--black-key-h);
+  padding-bottom: clamp(4px, 1vw, 10px);
+  font-size: var(--font-note-black);
+}
+
+/* Dimensões adaptadas para os mini pianos dos slots */
+.piano-mini {
+  --white-key-w: clamp(15px, calc((100vw - 80px) / 14), 22px);
+  --white-key-h: calc(var(--white-key-w) * 3.4);
+  --black-key-w: calc(var(--white-key-w) * 0.65);
+  --black-key-h: calc(var(--white-key-h) * 0.62);
+  --font-note-white: clamp(0.42rem, 1vw, 0.62rem);
+  --font-note-black: clamp(0.35rem, 0.8vw, 0.52rem);
+  --key-radius: 3px;
+}
+
+.piano-mini .key.white {
+  width: var(--white-key-w);
+  height: var(--white-key-h);
+  padding-bottom: clamp(3px, 0.8vw, 6px);
+  font-size: var(--font-note-white);
+}
+
+.piano-mini .key.black {
+  width: var(--black-key-w);
+  height: var(--black-key-h);
+  padding-bottom: clamp(2px, 0.6vw, 4px);
+  font-size: var(--font-note-black);
+}
+
+/* Scroll horizontal suave e customizado para o teclado */
+.piano-scroll-container {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 6px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: #323238 transparent;
+}
+
+.piano-scroll-container::-webkit-scrollbar {
+  height: 6px;
+}
+
+.piano-scroll-container::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+}
+
+.piano-scroll-container::-webkit-scrollbar-thumb {
+  background: #323238;
+  border-radius: 3px;
+}
+
+.piano-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: #8257e5;
+}
