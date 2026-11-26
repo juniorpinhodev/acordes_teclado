@@ -9,19 +9,20 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Dicionário de Acordes e Inversões no Teclado",
+  title: "Meu Teclado — Treinamento Musical",
   description:
-    "Dicionário interativo de acordes e inversões no teclado/piano com sequenciador de repertório ilimitado.",
+    "Sistema didático para treinamento de acordes, inversões, campo harmônico, progressões e escalas no teclado.",
   authors: [{ name: "Junior Pinho | DEV", url: "https://www.juniorpinhodev.com.br" }],
   keywords: [
-    "acordes",
-    "teclado",
     "piano",
+    "teclado",
+    "acordes",
     "inversões",
-    "música",
+    "campo harmônico",
+    "escalas musicais",
+    "progressões de acordes",
     "harmonia",
-    "dicionário de acordes",
-    "sequenciador de repertório",
+    "sequenciador",
   ],
 };
 

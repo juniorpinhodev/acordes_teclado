@@ -239,6 +239,33 @@ export function useChordSlots() {
     });
   }, [slots, showToast, persistSlots]);
 
+  const saveMultipleSlots = useCallback(
+    (slotsData: SavedChordSlot[], sequenceLabel?: string) => {
+      if (slotsData.length === 0) return;
+
+      setSlots((prev) => {
+        const updated = [...prev];
+
+        for (const slotData of slotsData) {
+          const firstNull = updated.findIndex((s) => s === null);
+          if (firstNull === -1) {
+            updated.push(slotData);
+          } else {
+            updated[firstNull] = slotData;
+          }
+        }
+
+        persistSlots(updated);
+        const desc = sequenceLabel
+          ? `Sequência "${sequenceLabel}" (${slotsData.length} acordes)`
+          : `${slotsData.length} acordes`;
+        showToast(`✓ ${desc} adicionada aos slots!`);
+        return updated;
+      });
+    },
+    [persistSlots, showToast]
+  );
+
   const closeModal = useCallback(() => {
     setModalConfig(null);
   }, []);
@@ -252,6 +279,7 @@ export function useChordSlots() {
     addSlot,
     deleteEmptySlot,
     saveSlot,
+    saveMultipleSlots,
     swapSlots,
     toggleLock,
     removeSlot,

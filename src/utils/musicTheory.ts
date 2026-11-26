@@ -4,8 +4,10 @@ import {
   NOTE_PITCH_MAP,
   TYPE_SYMBOLS,
   TYPE_LABELS,
+  CHORD_INTERVALS,
 } from "@/constants/chords";
-import { ChordMeta, InversionDescription } from "@/types/music";
+import { DEGREE_LABELS, HARMONIC_SCALES } from "@/constants/scales";
+import { ChordMeta, ChordProgression, HarmonicDegree, InversionDescription } from "@/types/music";
 
 export function getPitch(note: string): number {
   if (NOTE_PITCH_MAP[note] !== undefined) return NOTE_PITCH_MAP[note];
@@ -96,4 +98,108 @@ export function getInversionDescriptions(numNotes: number): InversionDescription
       { name: "2ª Inversão (Secundário)", short: "2ª Inv.", desc: "Quinta no Baixo" },
     ];
   }
+}
+
+const MAJOR_FLAT_PITCHES = new Set([5, 10, 3, 8, 1, 6]); // F, Bb, Eb, Ab, Db, Gb
+
+const SCALE_RELATIVE_MAJOR_OFFSET: Record<string, number> = {
+  major: 0,
+  natural_minor: 3,
+  harmonic_minor: 3,
+  melodic_minor: 3,
+  dorian: 10,
+  phrygian: 8,
+  lydian: 7,
+  mixolydian: 5,
+  locrian: 1,
+};
+
+export function shouldScaleUseFlat(tonicPitch: number, scaleId: string): boolean {
+  const offset = SCALE_RELATIVE_MAJOR_OFFSET[scaleId] ?? 0;
+  const relativeMajorPitch = (tonicPitch + offset) % 12;
+  return MAJOR_FLAT_PITCHES.has(relativeMajorPitch);
+}
+
+export function generateHarmonicField(
+  tonicNote: string,
+  scaleId: string,
+  useTetrads: boolean
+): HarmonicDegree[] {
+  const scale = HARMONIC_SCALES.find((s) => s.id === scaleId) || HARMONIC_SCALES[0];
+  const tonicPitch = getPitch(tonicNote);
+  const scaleUseFlat = shouldScaleUseFlat(tonicPitch, scale.id);
+  const noteList = scaleUseFlat ? CHROMATIC_FLATS : CHROMATIC_SHARPS;
+
+  const types = useTetrads ? scale.tetradTypes : scale.triadTypes;
+  const romans = useTetrads ? scale.romanTetrads : scale.romanTriads;
+
+  return scale.intervals.map((semitoneOffset, idx) => {
+    const degreePitch = (tonicPitch + semitoneOffset) % 12;
+    const displayRoot = noteList[degreePitch];
+    const selectRoot = CHROMATIC_SHARPS[degreePitch];
+    const type = types[idx] || "major";
+    const intervals = CHORD_INTERVALS[type] || [0, 4, 7];
+
+    // Estado fundamental ajustado para caber nas 2 oitavas do teclado
+    const keys = fitTo2Octaves(intervals.map((iv) => degreePitch + iv));
+    const useFlat = scaleUseFlat || isFlatChord(displayRoot, type);
+    const { chordSymbol, chordFullName } = getChordMeta(displayRoot, type);
+
+    return {
+      degreeIndex: idx,
+      degreeLabel: DEGREE_LABELS[idx],
+      roman: romans[idx],
+      root: displayRoot,
+      selectRoot,
+      type,
+      chordSymbol,
+      chordFullName,
+      keys,
+      notesText: formatNotesText(keys, useFlat),
+      useFlat,
+      harmonicFunction: scale.functions[idx],
+    };
+  });
+}
+
+export function resolveProgressionChords(
+  progression: ChordProgression,
+  tonicNote: string,
+  formationMode: "auto" | "triads" | "tetrads" = "auto"
+): HarmonicDegree[] {
+  const useTetrads =
+    formationMode === "auto" ? Boolean(progression.preferTetrads) : formationMode === "tetrads";
+
+  const field = generateHarmonicField(tonicNote, progression.scaleId, useTetrads);
+
+  return progression.steps.map((step) => {
+    const baseDegree = field[step.degreeIndex] || field[0];
+    if (!step.overrideType) {
+      return baseDegree;
+    }
+
+    const effectiveType =
+      formationMode === "triads" && step.overrideType === "7" ? "major" : step.overrideType;
+    const effectiveRoman =
+      formationMode === "triads" && step.overrideType === "7" && step.overrideRoman
+        ? step.overrideRoman.replace(/7$/, "")
+        : step.overrideRoman || baseDegree.roman;
+
+    const pitch = getPitch(baseDegree.selectRoot);
+    const intervals = CHORD_INTERVALS[effectiveType] || [0, 4, 7];
+    const keys = fitTo2Octaves(intervals.map((iv) => pitch + iv));
+    const useFlat = baseDegree.useFlat || isFlatChord(baseDegree.root, effectiveType);
+    const { chordSymbol, chordFullName } = getChordMeta(baseDegree.root, effectiveType);
+
+    return {
+      ...baseDegree,
+      type: effectiveType,
+      roman: effectiveRoman,
+      chordSymbol,
+      chordFullName,
+      keys,
+      notesText: formatNotesText(keys, useFlat),
+      useFlat,
+    };
+  });
 }

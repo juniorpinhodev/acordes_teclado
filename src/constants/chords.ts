@@ -57,6 +57,7 @@ export const CHORD_TYPE_CATEGORIES: ChordTypeCategory[] = [
       { value: "7sharp5", label: "Com 7ª e 5ª Aumentada (7(#5))" },
       { value: "7sharp9", label: "Com 7ª e 9ª Aumentada (7(#9))" },
       { value: "maj7sharp11", label: "Com 7ª Maior e 11ª Aumentada (7M(#11))" },
+      { value: "augMaj7", label: "Com 7ª Maior e 5ª Aumentada (7M(#5))" },
     ],
   },
   {
@@ -140,6 +141,7 @@ export const CHORD_INTERVALS: Record<string, number[]> = {
   "7sharp5": [0, 4, 8, 10],
   "7sharp9": [0, 4, 7, 10, 15],
   maj7sharp11: [0, 4, 7, 11, 18],
+  augMaj7: [0, 4, 8, 11],
 
   // Bemóis (b)
   flat: [-1, 3, 6],
@@ -179,6 +181,7 @@ export const TYPE_LABELS: Record<string, string> = {
   "7sharp5": "com 7ª e 5ª Aumentada (7#5)",
   "7sharp9": "com 7ª e 9ª Aumentada (7#9)",
   maj7sharp11: "com 7ª Maior e 11ª Aumentada (7M#11)",
+  augMaj7: "com 7ª Maior e 5ª Aumentada (7M#5)",
 
   flat: "Bemol",
   flat_m: "Bemol Menor",
@@ -217,6 +220,7 @@ export const TYPE_SYMBOLS: Record<string, string> = {
   "7sharp5": "7(#5)",
   "7sharp9": "7(#9)",
   maj7sharp11: "7M(#11)",
+  augMaj7: "7M(#5)",
 
   flat: "b",
   flat_m: "bm",

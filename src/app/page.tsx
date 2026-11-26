@@ -1,9 +1,12 @@
 "use client";
 
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useRef } from "react";
 import { Header } from "@/components/Header";
 import { ControlsCard } from "@/components/ControlsCard";
 import { AudioControls } from "@/components/AudioControls";
+import { HarmonicFieldSection } from "@/components/HarmonicFieldSection";
+import { PopularProgressionsSection } from "@/components/PopularProgressionsSection";
+import { ScalesExplorerSection } from "@/components/ScalesExplorerSection";
 import { ChordInversionCard } from "@/components/ChordInversionCard";
 import { SlotsSection } from "@/components/SlotsSection";
 import { ConfirmModal } from "@/components/ConfirmModal";
@@ -23,13 +26,14 @@ import {
 } from "@/utils/musicTheory";
 import { detectChordFromPitches } from "@/utils/midiHelper";
 import { CHORD_INTERVALS } from "@/constants/chords";
-import { SavedChordSlot } from "@/types/music";
+import { HarmonicDegree, SavedChordSlot } from "@/types/music";
 
 export default function HomePage() {
   const [rootNote, setRootNote] = useState<string>("C");
   const [chordType, setChordType] = useState<string>("major");
   const [inversionIndex, setInversionIndex] = useState<number>(0);
   const [targetSlot, setTargetSlot] = useState<number | "auto">("auto");
+  const controlsSectionRef = useRef<HTMLDivElement | null>(null);
 
   // Hook de Slots da Sequência
   const {
@@ -39,6 +43,7 @@ export default function HomePage() {
     addSlot,
     deleteEmptySlot,
     saveSlot,
+    saveMultipleSlots,
     swapSlots,
     toggleLock,
     removeSlot,
@@ -199,11 +204,53 @@ export default function HomePage() {
     [slots]
   );
 
+  // Carregar acorde do campo harmônico para os seletores e inversões
+  const handleSelectHarmonicChord = useCallback((selectRoot: string, type: string) => {
+    setRootNote(selectRoot);
+    setChordType(type);
+    setInversionIndex(0);
+    controlsSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
+
+  const degreeToSavedSlot = useCallback((degree: HarmonicDegree): SavedChordSlot => {
+    const descriptions = getInversionDescriptions(degree.keys.length);
+    return {
+      root: degree.selectRoot,
+      type: degree.type,
+      chordName: degree.chordSymbol,
+      chordFullName: degree.chordFullName,
+      inversionIdx: 0,
+      inversionName: descriptions[0]?.name || "Estado Fundamental",
+      inversionShort: descriptions[0]?.short || "Fund.",
+      keys: degree.keys,
+      notesText: degree.notesText,
+      useFlat: degree.useFlat,
+      locked: false,
+    };
+  }, []);
+
+  // Salvar acorde diretamente do campo harmônico para o slot alvo
+  const handleSaveHarmonicDegree = useCallback(
+    (degree: HarmonicDegree) => {
+      saveSlot(degreeToSavedSlot(degree), targetSlot);
+    },
+    [degreeToSavedSlot, saveSlot, targetSlot]
+  );
+
+  // Salvar sequência inteira de acordes populares nos slots
+  const handleSaveProgressionToSlots = useCallback(
+    (degrees: HarmonicDegree[], sequenceName: string) => {
+      const slotsData = degrees.map(degreeToSavedSlot);
+      saveMultipleSlots(slotsData, sequenceName);
+    },
+    [degreeToSavedSlot, saveMultipleSlots]
+  );
+
   // Tocar nota ao clicar em qualquer tecla do piano na tela
   const handlePianoKeyClick = useCallback(
-    (pianoIndex: number) => {
+    (pianoIndex: number, detune: number = 0) => {
       const midiNote = 48 + pianoIndex; // C3 + índice
-      playNote(midiNote, 90);
+      playNote(midiNote, 90, detune);
       setTimeout(() => {
         stopNote(midiNote);
       }, 700);
@@ -216,22 +263,7 @@ export default function HomePage() {
       <Header />
 
       <main className="w-full max-w-[840px] flex flex-col items-center">
-        {/* Painel de Controles de Acordes (Configurações no topo) */}
-        <ControlsCard
-          rootNote={rootNote}
-          onRootChange={setRootNote}
-          chordType={chordType}
-          onTypeChange={setChordType}
-          inversionIndex={safeInversionIndex}
-          onInversionChange={setInversionIndex}
-          inversionOptions={inversionDescriptions}
-          targetSlot={targetSlot}
-          onTargetSlotChange={setTargetSlot}
-          slots={slots}
-          onSave={() => handleSaveChord()}
-        />
-
-        {/* Painel de Áudio e Seleção de Timbres (Abaixo dos controles de acordes) */}
+        {/* Painel de Áudio, Timbres e Conexão MIDI */}
         <AudioControls
           isMidiSupported={isMidiSupported}
           isMidiConnected={isMidiConnected}
@@ -250,6 +282,40 @@ export default function HomePage() {
           isSustainOn={isSustainOn}
           onToggleSustain={toggleSustain}
         />
+
+        {/* Painel Expansível de Campo Harmônico e Escalas */}
+        <HarmonicFieldSection
+          onPlayChord={(keys) => playChord(keys)}
+          onSelectChord={handleSelectHarmonicChord}
+          onSaveToSlot={handleSaveHarmonicDegree}
+        />
+
+        {/* Painel Expansível de Progressões de Acordes */}
+        <PopularProgressionsSection
+          onPlayChord={(keys) => playChord(keys)}
+          onSelectChord={handleSelectHarmonicChord}
+          onSaveSequenceToSlots={handleSaveProgressionToSlots}
+        />
+
+        {/* Painel Expansível de Escalas Musicais */}
+        <ScalesExplorerSection onPlayKey={handlePianoKeyClick} />
+
+        {/* Painel de Controles de Acordes (Próximo aos teclados de inversão) */}
+        <div ref={controlsSectionRef} className="w-full flex justify-center">
+          <ControlsCard
+            rootNote={rootNote}
+            onRootChange={setRootNote}
+            chordType={chordType}
+            onTypeChange={setChordType}
+            inversionIndex={safeInversionIndex}
+            onInversionChange={setInversionIndex}
+            inversionOptions={inversionDescriptions}
+            targetSlot={targetSlot}
+            onTargetSlotChange={setTargetSlot}
+            slots={slots}
+            onSave={() => handleSaveChord()}
+          />
+        </div>
 
         {/* Grade de Inversões em Tempo Real */}
         <div className="w-full flex flex-col gap-6 sm:gap-8">

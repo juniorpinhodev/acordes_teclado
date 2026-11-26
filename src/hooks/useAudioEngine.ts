@@ -4,7 +4,7 @@ import { useRef, useState, useCallback, useEffect } from "react";
 import { TimbreType } from "@/types/audio";
 
 interface PlayableInstrument {
-  start: (note: number, velocity: number) => (() => void) | void;
+  start: (note: number, velocity: number, detune?: number) => (() => void) | void;
   stop: (note: number) => void;
 }
 
@@ -124,7 +124,7 @@ export function useAudioEngine() {
           });
           await piano.ready;
           instrumentsRef.current["grand_piano"] = {
-            start: (note, velocity) => piano.start({ note, velocity }),
+            start: (note, velocity, detune) => piano.start({ note, velocity, detune }),
             stop: (note) => piano.stop(note),
           };
         } else if (timbre === "fm_piano") {
@@ -137,7 +137,7 @@ export function useAudioEngine() {
           });
           await fm.ready;
           instrumentsRef.current["fm_piano"] = {
-            start: (note, velocity) => fm.start({ note, velocity }),
+            start: (note, velocity, detune) => fm.start({ note, velocity, detune }),
             stop: (note) => fm.stop(note),
           };
         } else if (timbre === "worship_pad") {
@@ -150,7 +150,7 @@ export function useAudioEngine() {
           });
           await pad.ready;
           instrumentsRef.current["worship_pad"] = {
-            start: (note, velocity) => pad.start({ note, velocity }),
+            start: (note, velocity, detune) => pad.start({ note, velocity, detune }),
             stop: (note) => pad.stop(note),
           };
         } else if (timbre === "soft_strings") {
@@ -163,7 +163,7 @@ export function useAudioEngine() {
           });
           await strings.ready;
           instrumentsRef.current["soft_strings"] = {
-            start: (note, velocity) => strings.start({ note, velocity }),
+            start: (note, velocity, detune) => strings.start({ note, velocity, detune }),
             stop: (note) => strings.stop(note),
           };
         } else if (timbre === "rhodes") {
@@ -176,7 +176,7 @@ export function useAudioEngine() {
           });
           await rhodes.ready;
           instrumentsRef.current["rhodes"] = {
-            start: (note, velocity) => rhodes.start({ note, velocity }),
+            start: (note, velocity, detune) => rhodes.start({ note, velocity, detune }),
             stop: (note) => rhodes.stop(note),
           };
         } else if (timbre === "gospel_organ") {
@@ -189,7 +189,7 @@ export function useAudioEngine() {
           });
           await organ.ready;
           instrumentsRef.current["gospel_organ"] = {
-            start: (note, velocity) => organ.start({ note, velocity }),
+            start: (note, velocity, detune) => organ.start({ note, velocity, detune }),
             stop: (note) => organ.stop(note),
           };
         }
@@ -258,7 +258,7 @@ export function useAudioEngine() {
 
   // Tocar uma nota (Note On)
   const playNote = useCallback(
-    async (midiNumber: number, velocity: number = 90) => {
+    async (midiNumber: number, velocity: number = 90, detune: number = 0) => {
       await resumeAudioContext();
       const safeVelocity = Math.min(127, Math.max(1, velocity));
 
@@ -284,7 +284,7 @@ export function useAudioEngine() {
           } catch {}
         }
 
-        const voiceStopFn = inst.start(midiNumber, safeVelocity);
+        const voiceStopFn = inst.start(midiNumber, safeVelocity, detune !== 0 ? detune : undefined);
         if (typeof voiceStopFn === "function") {
           activeVoicesRef.current.set(midiNumber, voiceStopFn);
         }

@@ -3,11 +3,11 @@ import React from "react";
 export function Header() {
   return (
     <header className="w-full max-w-[840px] text-center mb-6 sm:mb-8 md:mb-10">
-      <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-white mb-2">
-        Dicionário de Acordes e Inversões
+      <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-white mb-2">
+        Meu Teclado
       </h1>
       <p className="text-sm sm:text-base text-dark-300 font-normal m-0">
-        Monte seus acordes e organize a sequência arrastando os slots
+        Sistema didático para treinamento de acordes, escalas e harmonia no teclado
       </p>
       <div className="text-xs sm:text-sm text-dark-300 font-semibold mt-2">
         <span>Desenvolvido por </span>
